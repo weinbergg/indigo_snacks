@@ -50,12 +50,25 @@ export function Header() {
 
           <button
             type="button"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-white/80 shadow-soft lg:hidden"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-white/80 shadow-soft lg:hidden"
             onClick={() => setIsOpen((value) => !value)}
             aria-expanded={isOpen}
             aria-label="Открыть меню"
           >
-            <span className="text-lg font-semibold leading-none text-ink">{isOpen ? '×' : '≡'}</span>
+            <span className="relative block h-3.5 w-[18px] text-ink" aria-hidden="true">
+              {isOpen ? (
+                <>
+                  <span className="absolute left-0 top-1/2 h-[1.8px] w-[18px] -translate-y-1/2 rotate-45 rounded-full bg-current" />
+                  <span className="absolute left-0 top-1/2 h-[1.8px] w-[18px] -translate-y-1/2 -rotate-45 rounded-full bg-current" />
+                </>
+              ) : (
+                <>
+                  <span className="absolute left-0 top-0 h-[1.8px] w-[18px] rounded-full bg-current" />
+                  <span className="absolute left-0 top-1/2 h-[1.8px] w-[18px] -translate-y-1/2 rounded-full bg-current" />
+                  <span className="absolute left-0 bottom-0 h-[1.8px] w-[18px] rounded-full bg-current" />
+                </>
+              )}
+            </span>
           </button>
         </div>
 

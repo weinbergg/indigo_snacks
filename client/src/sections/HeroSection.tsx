@@ -59,13 +59,6 @@ export function HeroSection() {
               <div className="absolute inset-6 rounded-full border border-white/24 transition duration-300" />
               <div className="relative w-full">
                 <div className="relative rounded-full bg-[#d6e7e2] p-4 shadow-lift transition duration-300 group-hover:shadow-[0_28px_80px_rgba(18,84,86,0.18)] sm:p-6">
-                  <div className="pointer-events-none absolute inset-[8%] opacity-85">
-                    <img
-                      src="/assets/brand/brand-frame.svg"
-                      alt=""
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
                   <motion.div
                     className="relative z-10 mx-auto aspect-square w-full max-w-[30rem]"
                     whileHover={reduceMotion ? undefined : { scale: 1.045 }}
@@ -73,9 +66,10 @@ export function HeroSection() {
                   >
                     <BrandDogBadge
                       className="h-full w-full"
+                      shapeInsetClassName="inset-[6.2%]"
                       fillClassName="bg-[#d6e7e2]"
+                      frameClassName="inset-[8%] opacity-85"
                       alt="Фирменная графичная собака бренда Индиго"
-                      dogClassName="p-[6.2%]"
                     />
                   </motion.div>
                 </div>

@@ -14,7 +14,9 @@ export function BrandMark({ compact = false }: BrandMarkProps) {
     >
       <BrandDogBadge
         className="h-10 w-10 shrink-0 border border-brand/20 sm:h-12 sm:w-12"
-        dogClassName="p-[8.8%] opacity-90"
+        shapeInsetClassName="inset-[8.8%]"
+        showInnerRings
+        dogClassName="opacity-90"
       />
       <span className="flex min-w-0 flex-col">
         <span className="truncate font-display text-[1.35rem] uppercase tracking-[0.13em] sm:text-[1.55rem] sm:tracking-[0.18em]">

@@ -103,7 +103,10 @@
 
 ## 5. Переменные окружения
 
-Пример лежит в корне: `.env.example`
+Примеры в корне:
+
+- `.env.example` — локальная разработка
+- `.env.production.example` — production для VPS/домена
 
 ```env
 NODE_ENV=development
@@ -209,6 +212,17 @@ pm2 start ecosystem.config.cjs
 pm2 save
 ```
 
+Для production под домен `indigo-snacks.ru`:
+
+```bash
+cp .env.production.example .env
+```
+
+Проверь в `.env`:
+
+- `NODE_ENV=production`
+- `CLIENT_ORIGIN="https://indigo-snacks.ru"`
+
 ### Подключение Nginx
 
 ```bash
@@ -217,6 +231,16 @@ sudo ln -s /etc/nginx/sites-available/indigo-snacks.conf /etc/nginx/sites-enable
 sudo nginx -t
 sudo systemctl reload nginx
 ```
+
+Проверь, что DNS-записи домена уже указывают на IP VPS:
+
+- `A` для `indigo-snacks.ru` -> `<VPS_IP>`
+- `A` для `www.indigo-snacks.ru` -> `<VPS_IP>`
+
+Nginx-конфиг уже содержит:
+
+- `server_name indigo-snacks.ru`
+- редирект `www.indigo-snacks.ru` -> `indigo-snacks.ru`
 
 ### Базовая безопасность
 
@@ -234,6 +258,23 @@ chmod 600 .env
 - использовать отдельного deploy-пользователя
 - делать резервную копию файла SQLite
 - мониторить `pm2 logs` и свободную память
+
+Быстрое включение HTTPS (после настройки DNS):
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d indigo-snacks.ru -d www.indigo-snacks.ru
+```
+
+Для VPS `1 vCPU / 1 GB RAM / 10 GB SSD` рекомендуется добавить swap:
+
+```bash
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
 
 ## 11. Комментарии по дальнейшему росту
 
