@@ -4,6 +4,7 @@ import { heroStats } from '../data/brand';
 import { Container } from '../components/ui/Container';
 import { getButtonClassName } from '../components/ui/Button';
 import { Reveal } from '../components/Reveal';
+import { BrandDogBadge } from '../components/BrandDogBadge';
 
 export function HeroSection() {
   const reduceMotion = useReducedMotion();
@@ -70,19 +71,11 @@ export function HeroSection() {
                     whileHover={reduceMotion ? undefined : { scale: 1.045 }}
                     transition={{ type: 'spring', stiffness: 260, damping: 22 }}
                   >
-                    <div className="pointer-events-none absolute inset-0 z-0">
-                      <div className="absolute left-[30%] top-[34%] h-[24%] w-[34%] rounded-[48%] bg-[#d6e7e2]" />
-                      <div className="absolute left-[52%] top-[38%] h-[24%] w-[24%] rounded-[48%] bg-[#d6e7e2]" />
-                      <div className="absolute left-[58%] top-[52%] h-[26%] w-[17%] rounded-[44%] bg-[#d6e7e2] rotate-[8deg]" />
-                      <div className="absolute left-[66%] top-[58%] h-[24%] w-[12%] rounded-[42%] bg-[#d6e7e2] rotate-[10deg]" />
-                      <div className="absolute left-[40%] top-[57%] h-[16%] w-[18%] rounded-full bg-[#d6e7e2]" />
-                      <div className="absolute left-[56%] top-[74%] h-[8%] w-[23%] rounded-full bg-[#d6e7e2]" />
-                    </div>
-                    <img
-                      src="/assets/brand/dog-illustration.png"
+                    <BrandDogBadge
+                      className="h-full w-full"
+                      fillClassName="bg-[#d6e7e2]"
                       alt="Фирменная графичная собака бренда Индиго"
-                      className="relative z-10 h-full w-full object-contain"
-                      fetchPriority="high"
+                      dogClassName="p-[6.2%]"
                     />
                   </motion.div>
                 </div>
