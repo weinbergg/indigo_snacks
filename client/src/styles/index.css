@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: 246 241 233;
+  --color-panel: 255 251 245;
+  --color-ink: 31 34 34;
+  --color-muted: 91 97 98;
+  --color-line: 215 207 196;
+  --color-brand: 18 84 86;
+  --color-brand-soft: 219 232 228;
+  --color-brand-deep: 16 56 58;
+  --color-accent: 166 137 90;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top left, rgba(18, 84, 86, 0.11), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(166, 137, 90, 0.12), transparent 24%),
+    rgb(var(--color-bg));
+  color: rgb(var(--color-ink));
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+::selection {
+  background: rgba(18, 84, 86, 0.16);
+}
+
+@layer components {
+  .section-space {
+    @apply py-11 sm:py-14;
+  }
+
+  .section-space-hero {
+    @apply pb-11 pt-8 sm:pb-14 sm:pt-10;
+  }
+
+  .glass-panel {
+    @apply rounded-[2rem] border border-line/70 bg-white/70 p-6 shadow-soft backdrop-blur-sm;
+  }
+
+  .interactive-panel {
+    @apply transition duration-300 ease-out hover:-translate-y-1 hover:shadow-lift;
+  }
+
+  .input-shell {
+    @apply min-h-14 w-full rounded-2xl border border-line bg-white/90 px-5 text-base leading-6 text-ink outline-none transition placeholder:text-muted/70 focus:border-brand/40 focus:ring-4 focus:ring-brand/10;
+  }
+}
