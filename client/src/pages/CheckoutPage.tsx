@@ -58,7 +58,7 @@ export default function CheckoutPage() {
       postalCode: '',
       comment: '',
       deliveryMethod: 'CDEK',
-      paymentMethod: 'ONLINE_PLACEHOLDER'
+      paymentMethod: 'OZON_ACQUIRING'
     }
   });
 
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
         postalCode: '',
         comment: '',
         deliveryMethod: 'CDEK',
-        paymentMethod: 'ONLINE_PLACEHOLDER'
+        paymentMethod: 'OZON_ACQUIRING'
       });
 
       if (values.paymentMethod === 'OZON_ACQUIRING') {

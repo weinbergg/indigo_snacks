@@ -1,12 +1,10 @@
 import { env } from '../../config/env';
 import { AppError } from '../../utils/errors';
 import type {
-  OzonCancelPaymentRequest,
-  OzonCreatePaymentRequest,
-  OzonCreatePaymentResponse,
-  OzonGetPaymentDetailsRequest,
-  OzonGetPaymentDetailsResponse,
-  OzonRefundPaymentRequest
+  OzonCreateOrderRequest,
+  OzonCreateOrderResponse,
+  OzonGetOrderStatusRequest,
+  OzonGetOrderStatusResponse
 } from './ozon-acquiring.types';
 
 async function ozonPost<TResponse>(path: string, payload: unknown) {
@@ -54,18 +52,10 @@ function safeParseJson(value: string) {
   }
 }
 
-export function createOzonPayment(payload: OzonCreatePaymentRequest) {
-  return ozonPost<OzonCreatePaymentResponse>('/v1/createPayment', payload);
+export function createOzonOrder(payload: OzonCreateOrderRequest) {
+  return ozonPost<OzonCreateOrderResponse>('/v1/createOrder', payload);
 }
 
-export function getOzonPaymentDetails(payload: OzonGetPaymentDetailsRequest) {
-  return ozonPost<OzonGetPaymentDetailsResponse>('/v1/getPaymentDetails', payload);
-}
-
-export function cancelOzonPayment(payload: OzonCancelPaymentRequest) {
-  return ozonPost('/v1/cancelPayment', payload);
-}
-
-export function refundOzonPayment(payload: OzonRefundPaymentRequest) {
-  return ozonPost('/v1/refundPayment', payload);
+export function getOzonOrderStatus(payload: OzonGetOrderStatusRequest) {
+  return ozonPost<OzonGetOrderStatusResponse>('/v1/getOrderStatus', payload);
 }

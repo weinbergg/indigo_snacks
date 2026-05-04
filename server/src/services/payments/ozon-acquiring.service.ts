@@ -1,21 +1,20 @@
 import { prisma } from '../../db/prisma';
 import { env } from '../../config/env';
 import { AppError } from '../../utils/errors';
-import {
-  createOzonPayment,
-  getOzonPaymentDetails
-} from './ozon-acquiring.client';
+import { createOzonOrder, getOzonOrderStatus } from './ozon-acquiring.client';
 import {
   resolveOzonNotificationPayload,
-  signOzonCreatePayment,
-  signOzonGetOrCancelPayment,
+  signOzonCreateOrder,
+  signOzonGetOrder,
   verifyOzonNotificationSignature
 } from './ozon-acquiring.signer';
 import type {
-  OzonCreatePaymentRequest,
-  OzonGetPaymentDetailsResponse,
+  OzonCreateOrderRequest,
+  OzonCreateOrderResponse,
+  OzonGetOrderStatusResponse,
   OzonMoney,
-  OzonNotificationPayload
+  OzonNotificationPayload,
+  OzonOrderSnapshot
 } from './ozon-acquiring.types';
 
 const ACTIVE_PAYMENT_STATUSES = new Set([
@@ -57,7 +56,11 @@ function getOrderFallbackBaseUrl() {
   return env.CLIENT_ORIGIN || 'http://localhost:5173';
 }
 
-function appendOrderQuery(url: string, orderNumber: string, paymentState?: 'success' | 'failed') {
+function appendOrderQuery(
+  url: string,
+  orderNumber: string,
+  paymentState?: 'success' | 'failed'
+) {
   const fallbackBaseUrl = getOrderFallbackBaseUrl();
 
   try {
@@ -83,19 +86,13 @@ function appendOrderQuery(url: string, orderNumber: string, paymentState?: 'succ
 function getOzonReturnUrls(orderNumber: string) {
   const fallbackBaseUrl = getOrderFallbackBaseUrl();
   const baseFailUrl =
-    env.OZON_ACQUIRING_FAIL_URL ||
-    `${fallbackBaseUrl}/checkout?payment=failed`;
-  const baseRedirectUrl =
-    env.OZON_ACQUIRING_REDIRECT_URL ||
-    `${fallbackBaseUrl}/checkout`;
+    env.OZON_ACQUIRING_FAIL_URL || `${fallbackBaseUrl}/checkout?payment=failed`;
   const baseSuccessUrl =
-    env.OZON_ACQUIRING_SUCCESS_URL ||
-    `${fallbackBaseUrl}/checkout?payment=success`;
+    env.OZON_ACQUIRING_SUCCESS_URL || `${fallbackBaseUrl}/checkout?payment=success`;
 
   return {
     failUrl: appendOrderQuery(baseFailUrl, orderNumber, 'failed'),
     notificationUrl: env.OZON_ACQUIRING_NOTIFICATION_URL,
-    redirectUrl: appendOrderQuery(baseRedirectUrl, orderNumber),
     successUrl: appendOrderQuery(baseSuccessUrl, orderNumber, 'success')
   };
 }
@@ -107,41 +104,37 @@ function formatOzonMoney(valueKopecks: number): OzonMoney {
   };
 }
 
-function buildOzonPaymentExtId(orderNumber: string) {
-  return `${orderNumber}-ozon-${Date.now()}`;
-}
-
-function mapOzonOperationStatus(status: string | undefined) {
+function mapOzonOrderStatus(status: string | undefined) {
   switch (status) {
-    case 'PAYMENT_NEW':
+    case 'STATUS_NEW':
       return 'AWAITING_REDIRECT';
-    case 'PAYMENT_PROCESSING':
+    case 'STATUS_PAYMENT_PENDING':
       return 'PROCESSING';
-    case 'PAYMENT_AUTHORIZED':
+    case 'STATUS_AUTHORIZED':
       return 'AUTHORIZED';
-    case 'PAYMENT_CONFIRMED':
+    case 'STATUS_PAID':
       return 'PAID';
-    case 'PAYMENT_REJECTED':
-      return 'FAILED';
-    case 'PAYMENT_CANCELED':
-    case 'CANCEL_SUCCESS':
-      return 'CANCELED';
-    case 'REFUND_SUCCESS':
+    case 'STATUS_PARTITIONAL_REFUND':
+    case 'STATUS_REFUNDED':
       return 'REFUNDED';
-    case 'REFUND_FAILED':
-    case 'CANCEL_FAILED':
-      return 'FAILED';
-    case 'CHARGEBACK_SUCCESS':
-    case 'SBP_DISPUTE_SUCCESS':
+    case 'STATUS_CANCELED':
+    case 'STATUS_PARTITION_CANCELED':
+      return 'CANCELED';
+    case 'STATUS_DISPUTED':
+    case 'STATUS_DISPUTING':
       return 'REVIEW';
-    case 'REVERT_CHARGEBACK_SUCCESS':
-      return 'PAID';
+    case 'STATUS_EXPIRED':
+      return 'FAILED';
     default:
       return 'PENDING';
   }
 }
 
 function mapOzonNotificationStatus(status: string) {
+  if (status.startsWith('STATUS_')) {
+    return mapOzonOrderStatus(status);
+  }
+
   switch (status) {
     case 'Completed':
       return 'PAID';
@@ -154,16 +147,20 @@ function mapOzonNotificationStatus(status: string) {
   }
 }
 
-function buildPaymentNote(paymentStatus: string, rawStatus?: string, errorMessage?: string) {
+function buildPaymentNote(
+  paymentStatus: string,
+  rawStatus?: string,
+  errorMessage?: string
+) {
   if (errorMessage) {
     return errorMessage;
   }
 
   switch (paymentStatus) {
     case 'AWAITING_REDIRECT':
-      return 'Ссылка на оплату Ozon Acquiring подготовлена.';
+      return 'Ссылка на страницу оплаты Ozon Acquiring подготовлена.';
     case 'PROCESSING':
-      return 'Ozon Acquiring обрабатывает платёж.';
+      return 'Ozon Acquiring ожидает завершения оплаты.';
     case 'AUTHORIZED':
       return 'Платёж авторизован в Ozon Acquiring.';
     case 'PAID':
@@ -196,21 +193,37 @@ function parsePaymentMeta(value: string | null | undefined) {
   }
 }
 
-function mergePaymentMeta(existing: string | null | undefined, patch: Record<string, unknown>) {
+function mergePaymentMeta(
+  existing: string | null | undefined,
+  patch: Record<string, unknown>
+) {
   const currentMeta = parsePaymentMeta(existing);
   return JSON.stringify({ ...currentMeta, ...patch });
 }
 
-function pickLatestOzonOperation(response: OzonGetPaymentDetailsResponse) {
-  if (!response.items?.length) {
-    return undefined;
+function resolveOzonOrderSnapshot(
+  response: OzonCreateOrderResponse | OzonGetOrderStatusResponse
+) {
+  const nestedItem = response.order?.item;
+  if (nestedItem) {
+    return nestedItem;
   }
 
-  return [...response.items].sort((left, right) => {
-    const leftTime = left.operationTime ? new Date(left.operationTime).getTime() : 0;
-    const rightTime = right.operationTime ? new Date(right.operationTime).getTime() : 0;
-    return rightTime - leftTime;
-  })[0];
+  if ('item' in response && response.item) {
+    return response.item;
+  }
+
+  if ('status' in response && (response.status || response.id || response.extId)) {
+    return {
+      extId: response.extId,
+      id: response.id,
+      isTestMode: response.isTestMode,
+      remainingAmount: response.remainingAmount,
+      status: response.status
+    } satisfies OzonOrderSnapshot;
+  }
+
+  return undefined;
 }
 
 async function getOrderForPayment(orderNumber: string) {
@@ -228,48 +241,79 @@ async function getOrderForPayment(orderNumber: string) {
   return order;
 }
 
-function buildOzonCreatePaymentPayload(input: {
+function buildOzonCreateOrderPayload(input: {
   accessKey: string;
   ipAddress?: string;
-  orderNumber: string;
+  order: Awaited<ReturnType<typeof getOrderForPayment>>;
   secretKey: string;
-  totalKopecks: number;
 }) {
-  const paymentExtId = buildOzonPaymentExtId(input.orderNumber);
-  const amount = formatOzonMoney(input.totalKopecks);
-  const urls = getOzonReturnUrls(input.orderNumber);
+  const extId = input.order.orderNumber;
+  const amount = formatOzonMoney(input.order.totalKopecks);
+  const expiresAt = new Date(
+    Date.now() + env.OZON_ACQUIRING_PAYMENT_TTL_SECONDS * 1000
+  ).toISOString();
+  const urls = getOzonReturnUrls(input.order.orderNumber);
+  const fiscalizationType = 'FISCAL_TYPE_SINGLE' as const;
+  const paymentAlgorithm = 'PAY_ALGO_SMS' as const;
 
-  const payload: OzonCreatePaymentRequest = {
+  const payload: OzonCreateOrderRequest = {
     accessKey: input.accessKey,
     amount,
-    extId: paymentExtId,
-    notificationUrl: urls.notificationUrl,
-    order: {
-      amount,
-      extId: input.orderNumber,
-      expiresAt: new Date(
-        Date.now() + env.OZON_ACQUIRING_PAYMENT_TTL_SECONDS * 1000
-      ).toISOString(),
-      failUrl: urls.failUrl,
-      notificationUrl: urls.notificationUrl,
-      successUrl: urls.successUrl
+    enableFiscalization: false,
+    expiresAt,
+    extData: {
+      orderNumber: input.order.orderNumber,
+      paymentMethod: input.order.paymentMethod,
+      source: 'indigo-snacks'
     },
-    payType: 'SBP',
-    redirectUrl: urls.redirectUrl,
-    requestSign: signOzonCreatePayment({
+    extId,
+    failUrl: urls.failUrl,
+    fiscalizationType,
+    items: input.order.items.map((item) => ({
+      extId: item.id,
+      name: `${item.productName} ${item.variantLabel}`,
+      price: formatOzonMoney(item.unitPriceKopecks),
+      quantity: item.quantity,
+      vat: 'VAT_UNSPECIFIED'
+    })),
+    mode: 'MODE_FULL',
+    notificationUrl: urls.notificationUrl,
+    paymentAlgorithm,
+    receiptEmail: input.order.email || undefined,
+    requestSign: signOzonCreateOrder({
       accessKey: input.accessKey,
-      extId: paymentExtId,
+      amount,
+      expiresAt,
+      extId,
+      fiscalizationType,
+      paymentAlgorithm,
       secretKey: input.secretKey
     }),
-    ttl: env.OZON_ACQUIRING_PAYMENT_TTL_SECONDS,
-    userInfo: input.ipAddress
-      ? {
-          ipAddress: input.ipAddress
-        }
-      : undefined
+    successUrl: urls.successUrl
   };
 
-  return { payload, paymentExtId };
+  return { payload, paymentExtId: extId };
+}
+
+function getOzonStatusLookup(order: Awaited<ReturnType<typeof getOrderForPayment>>) {
+  if (order.paymentProviderId) {
+    return {
+      extId: undefined,
+      id: order.paymentProviderId
+    };
+  }
+
+  if (order.paymentExternalId) {
+    return {
+      extId: order.paymentExternalId,
+      id: undefined
+    };
+  }
+
+  return {
+    extId: order.orderNumber,
+    id: undefined
+  };
 }
 
 export async function initOzonPaymentForOrder(orderNumber: string, ipAddress?: string) {
@@ -298,33 +342,34 @@ export async function initOzonPaymentForOrder(orderNumber: string, ipAddress?: s
     };
   }
 
-  const { payload, paymentExtId } = buildOzonCreatePaymentPayload({
+  const { payload, paymentExtId } = buildOzonCreateOrderPayload({
     accessKey: config.accessKey,
     ipAddress,
-    orderNumber: order.orderNumber,
-    secretKey: config.secretKey,
-    totalKopecks: order.totalKopecks
+    order,
+    secretKey: config.secretKey
   });
-  const response = await createOzonPayment(payload);
+  const response = await createOzonOrder(payload);
+  const orderSnapshot = resolveOzonOrderSnapshot(response);
+  const paymentId = orderSnapshot?.id || response.paymentDetails?.paymentId;
 
-  const paymentId = response.paymentDetails?.paymentId;
   if (!paymentId) {
-    throw new AppError('Ozon Acquiring не вернул paymentId.', 502, response);
+    throw new AppError('Ozon Acquiring не вернул идентификатор заказа.', 502, response);
   }
 
-  const rawStatus = response.paymentDetails?.status;
-  const paymentStatus = rawStatus ? mapOzonOperationStatus(rawStatus) : 'AWAITING_REDIRECT';
-  const redirectUrl = response.order?.item?.payLink || response.paymentDetails?.sbp?.payload || null;
+  const rawStatus = orderSnapshot?.status || response.paymentDetails?.status;
+  const paymentStatus = rawStatus ? mapOzonOrderStatus(rawStatus) : 'AWAITING_REDIRECT';
+  const redirectUrl =
+    orderSnapshot?.payLink || response.paymentDetails?.sbp?.payload || null;
   const paymentNote = buildPaymentNote(paymentStatus, rawStatus);
   const paymentMetaJson = mergePaymentMeta(order.paymentMetaJson, {
     ozon: {
       createdAt: new Date().toISOString(),
-      isTestMode: env.OZON_ACQUIRING_TEST_MODE,
-      orderId: response.order?.item?.id || null,
-      orderStatus: response.order?.item?.status || null,
-      payLink: response.order?.item?.payLink || null,
-      paymentType: response.paymentDetails?.type || null,
-      sbpPayload: response.paymentDetails?.sbp?.payload || null
+      createOrderResponse: response,
+      isTestMode: orderSnapshot?.isTestMode ?? env.OZON_ACQUIRING_TEST_MODE,
+      orderNumber: orderSnapshot?.number || null,
+      paymentAlgorithm: orderSnapshot?.paymentAlgorithm || payload.paymentAlgorithm,
+      payLink: redirectUrl,
+      paymentType: response.paymentDetails?.type || 'PAY_TYPE_BANK_CARD'
     }
   });
 
@@ -348,7 +393,7 @@ export async function initOzonPaymentForOrder(orderNumber: string, ipAddress?: s
     paymentExtId,
     paymentId,
     paymentStatus,
-    provider: 'OZON_ACQUIRING',
+    provider: 'OZON_ACQUIRING' as const,
     rawStatus,
     redirectUrl,
     reused: false
@@ -358,51 +403,60 @@ export async function initOzonPaymentForOrder(orderNumber: string, ipAddress?: s
 export async function syncOzonPaymentForOrder(orderNumber: string) {
   const config = requireOzonPaymentConfig();
   const order = await getOrderForPayment(orderNumber);
+  const lookup = getOzonStatusLookup(order);
 
-  if (!order.paymentProviderId) {
+  if (!lookup.id && !lookup.extId) {
     throw new AppError('Для заказа еще не создана попытка оплаты Ozon Acquiring.', 409);
   }
 
-  const response = await getOzonPaymentDetails({
+  const response = await getOzonOrderStatus({
     accessKey: config.accessKey,
-    id: order.paymentProviderId,
-    requestSign: signOzonGetOrCancelPayment({
+    extId: lookup.extId,
+    id: lookup.id,
+    requestSign: signOzonGetOrder({
       accessKey: config.accessKey,
-      id: order.paymentProviderId,
+      extId: lookup.extId,
+      id: lookup.id,
       secretKey: config.secretKey
     })
   });
 
-  const latestOperation = pickLatestOzonOperation(response);
-  const rawStatus = latestOperation?.status;
-  const paymentStatus = rawStatus ? mapOzonOperationStatus(rawStatus) : order.paymentStatus;
+  const orderSnapshot = resolveOzonOrderSnapshot(response);
+  const rawStatus = orderSnapshot?.status || response.status;
+  const paymentStatus = rawStatus ? mapOzonOrderStatus(rawStatus) : order.paymentStatus;
   const paymentNote = buildPaymentNote(paymentStatus, rawStatus);
   const paymentMetaJson = mergePaymentMeta(order.paymentMetaJson, {
     ozon: {
       ...(parsePaymentMeta(order.paymentMetaJson).ozon as Record<string, unknown> | undefined),
       lastSyncAt: new Date().toISOString(),
-      latestOperation: latestOperation || null
+      orderStatusResponse: response
     }
   });
+
+  const nextPaymentId = orderSnapshot?.id || order.paymentProviderId;
+  const nextRedirectUrl = orderSnapshot?.payLink || order.paymentRedirectUrl;
 
   await prisma.order.update({
     where: { id: order.id },
     data: {
-      paymentLastError: paymentStatus === 'FAILED' ? paymentNote : null,
+      paymentLastError:
+        paymentStatus === 'FAILED' || paymentStatus === 'CANCELED' ? paymentNote : null,
       paymentMetaJson,
       paymentNote,
+      paymentProviderId: nextPaymentId,
       paymentRawStatus: rawStatus,
+      paymentRedirectUrl: nextRedirectUrl,
       paymentStatus
     }
   });
 
   return {
     orderNumber: order.orderNumber,
-    paymentId: order.paymentProviderId,
+    paymentId: nextPaymentId || order.paymentExternalId || order.orderNumber,
     paymentStatus,
-    provider: 'OZON_ACQUIRING',
+    provider: 'OZON_ACQUIRING' as const,
     rawStatus,
-    transactionUid: latestOperation?.transactionUid
+    transactionUid: null
   };
 }
 
@@ -422,8 +476,13 @@ export async function handleOzonWebhook(payload: OzonNotificationPayload) {
   const resolvedPayload = resolveOzonNotificationPayload(payload);
   const order =
     (resolvedPayload.extOrderId
-      ? await prisma.order.findUnique({
-          where: { orderNumber: resolvedPayload.extOrderId }
+      ? await prisma.order.findFirst({
+          where: {
+            OR: [
+              { orderNumber: resolvedPayload.extOrderId },
+              { paymentExternalId: resolvedPayload.extOrderId }
+            ]
+          }
         })
       : null) ||
     (resolvedPayload.extTransactionId
@@ -461,6 +520,7 @@ export async function handleOzonWebhook(payload: OzonNotificationPayload) {
       paymentMetaJson,
       paymentNote,
       paymentProvider: 'OZON_ACQUIRING',
+      paymentProviderId: order.paymentProviderId || resolvedPayload.orderId || undefined,
       paymentRawStatus: resolvedPayload.status,
       paymentStatus
     }
