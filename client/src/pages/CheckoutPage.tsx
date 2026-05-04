@@ -129,10 +129,10 @@ export default function CheckoutPage() {
 
     let cancelled = false;
 
-    setSubmitState({
-      tone: 'info',
-      text: `Проверяем статус оплаты заказа ${orderNumber}...`
-    });
+      setSubmitState({
+        tone: 'info',
+        text: `Проверяем статус оплаты заказа ${orderNumber}...`
+      });
 
     apiRequest<OzonPaymentSyncResponse>(
       `/orders/${encodeURIComponent(orderNumber)}/payments/ozon/sync`,
@@ -226,7 +226,7 @@ export default function CheckoutPage() {
         if (payment.redirectUrl) {
           setSubmitState({
             tone: 'info',
-            text: `Заказ ${response.orderNumber} сохранен. Перенаправляем на страницу оплаты Ozon...`
+            text: `Заказ ${response.orderNumber} сохранен. Перенаправляем на страницу оплаты...`
           });
           window.location.assign(payment.redirectUrl);
           return;
@@ -241,8 +241,8 @@ export default function CheckoutPage() {
           tone: 'error',
           text:
             error instanceof Error
-              ? `Заказ ${response.orderNumber} сохранен, но не удалось запустить оплату Ozon: ${error.message}`
-              : `Заказ ${response.orderNumber} сохранен, но оплата Ozon не стартовала.`
+              ? `Заказ ${response.orderNumber} сохранен, но не удалось открыть страницу оплаты: ${error.message}`
+              : `Заказ ${response.orderNumber} сохранен, но страница оплаты не открылась.`
         });
       }
     } catch (error) {
@@ -379,9 +379,9 @@ export default function CheckoutPage() {
               </p>
               <div className="rounded-[1.4rem] border border-line/70 bg-white/80 px-5 py-4">
                 <p className="text-sm uppercase tracking-[0.28em] text-brand/70">Оплата</p>
-                <p className="mt-2 text-base font-semibold text-ink">Защищенная страница Ozon</p>
+                <p className="mt-2 text-base font-semibold text-ink">Защищенная страница оплаты</p>
                 <p className="mt-2 text-sm text-muted">
-                  После подтверждения заказа вы сразу перейдете на страницу оплаты Ozon Acquiring.
+                  После подтверждения заказа вы сразу перейдете на страницу оплаты.
                 </p>
               </div>
               <Textarea

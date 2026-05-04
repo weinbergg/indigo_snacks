@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import { inspect } from 'node:util';
 import { ZodError } from 'zod';
 import { AppError } from '../utils/errors';
 
@@ -20,11 +21,17 @@ export function errorHandler(
 
   if (error instanceof AppError) {
     if (error.statusCode >= 500) {
-      console.error('AppError', {
-        details: error.details,
-        message: error.message,
-        statusCode: error.statusCode
-      });
+      console.error(
+        'AppError',
+        inspect(
+          {
+            details: error.details,
+            message: error.message,
+            statusCode: error.statusCode
+          },
+          { depth: null, colors: false, compact: false }
+        )
+      );
     }
 
     response.status(error.statusCode).json({

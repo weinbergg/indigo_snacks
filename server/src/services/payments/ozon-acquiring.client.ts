@@ -1,10 +1,10 @@
 import { env } from '../../config/env';
 import { AppError } from '../../utils/errors';
 import type {
-  OzonCreateOrderRequest,
-  OzonCreateOrderResponse,
-  OzonGetOrderStatusRequest,
-  OzonGetOrderStatusResponse
+  OzonCreatePaymentRequest,
+  OzonCreatePaymentResponse,
+  OzonGetPaymentDetailsRequest,
+  OzonGetPaymentDetailsResponse
 } from './ozon-acquiring.types';
 
 async function ozonPost<TResponse>(path: string, payload: unknown) {
@@ -34,6 +34,7 @@ async function ozonPost<TResponse>(path: string, payload: unknown) {
             ? errorCause.message
             : error.message
           : 'unknown',
+      requestPayload: payload,
       requestUrl: requestUrl.toString()
     });
   }
@@ -42,7 +43,18 @@ async function ozonPost<TResponse>(path: string, payload: unknown) {
   const parsedBody = rawBody ? safeParseJson(rawBody) : undefined;
 
   if (!response.ok) {
+    const errorMessage =
+      parsedBody &&
+      typeof parsedBody === 'object' &&
+      'message' in parsedBody &&
+      typeof parsedBody.message === 'string'
+        ? parsedBody.message
+        : 'Сервис оплаты вернул ошибку.';
+
     throw new AppError('Ozon Acquiring вернул ошибку.', 502, {
+      requestPayload: payload,
+      requestUrl: requestUrl.toString(),
+      upstreamMessage: errorMessage,
       ozonStatus: response.status,
       ozonResponse: parsedBody ?? rawBody
     });
@@ -63,10 +75,10 @@ function safeParseJson(value: string) {
   }
 }
 
-export function createOzonOrder(payload: OzonCreateOrderRequest) {
-  return ozonPost<OzonCreateOrderResponse>('/v1/createOrder', payload);
+export function createOzonPayment(payload: OzonCreatePaymentRequest) {
+  return ozonPost<OzonCreatePaymentResponse>('/v1/createPayment', payload);
 }
 
-export function getOzonOrderStatus(payload: OzonGetOrderStatusRequest) {
-  return ozonPost<OzonGetOrderStatusResponse>('/v1/getOrderStatus', payload);
+export function getOzonPaymentDetails(payload: OzonGetPaymentDetailsRequest) {
+  return ozonPost<OzonGetPaymentDetailsResponse>('/v1/getPaymentDetails', payload);
 }
