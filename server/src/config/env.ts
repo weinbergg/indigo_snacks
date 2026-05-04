@@ -8,6 +8,23 @@ const envCandidates = [
   path.resolve(process.cwd(), '../.env')
 ];
 
+function normalizeOzonApiUrl(apiUrl: string | undefined) {
+  if (!apiUrl) {
+    return 'https://payapi.ozon.ru';
+  }
+
+  try {
+    const parsed = new URL(apiUrl);
+    if (parsed.hostname === 'api.ozon.ru') {
+      return 'https://payapi.ozon.ru';
+    }
+  } catch {
+    return apiUrl;
+  }
+
+  return apiUrl;
+}
+
 for (const candidate of envCandidates) {
   if (fs.existsSync(candidate)) {
     dotenv.config({ path: candidate, override: false });
@@ -63,7 +80,12 @@ const envSchema = z.object({
     .default(12000),
   OZON_ACQUIRING_ENABLED: booleanFlagSchema,
   OZON_ACQUIRING_TEST_MODE: booleanFlagSchema,
-  OZON_ACQUIRING_API_URL: z.string().trim().url().default('https://api.ozon.ru'),
+  OZON_ACQUIRING_API_URL: z
+    .string()
+    .trim()
+    .url()
+    .default('https://payapi.ozon.ru')
+    .transform((value) => normalizeOzonApiUrl(value)),
   OZON_ACQUIRING_ACCESS_KEY: optionalStringSchema,
   OZON_ACQUIRING_SECRET_KEY: optionalStringSchema,
   OZON_ACQUIRING_NOTIFICATION_SECRET_KEY: optionalStringSchema,

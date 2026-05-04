@@ -22,8 +22,19 @@ async function ozonPost<TResponse>(path: string, payload: unknown) {
       signal: AbortSignal.timeout(env.OZON_ACQUIRING_TIMEOUT_MS)
     });
   } catch (error) {
+    const errorCause =
+      error && typeof error === 'object' && 'cause' in error
+        ? (error as { cause?: unknown }).cause
+        : undefined;
+
     throw new AppError('Не удалось связаться с Ozon Acquiring.', 502, {
-      cause: error instanceof Error ? error.message : 'unknown'
+      cause:
+        error instanceof Error
+          ? errorCause instanceof Error
+            ? errorCause.message
+            : error.message
+          : 'unknown',
+      requestUrl: requestUrl.toString()
     });
   }
 

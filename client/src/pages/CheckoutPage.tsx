@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { deliveryOptions, paymentOptions } from '../data/brand';
+import { deliveryOptions } from '../data/brand';
 import { apiRequest } from '../lib/api';
 import { formatCurrency, pluralizeItems } from '../lib/format';
 import {
@@ -215,45 +215,36 @@ export default function CheckoutPage() {
         paymentMethod: 'OZON_ACQUIRING'
       });
 
-      if (values.paymentMethod === 'OZON_ACQUIRING') {
-        try {
-          const payment = await apiRequest<OzonPaymentInitResponse>(
-            `/orders/${encodeURIComponent(response.orderNumber)}/payments/ozon/init`,
-            {
-              method: 'POST'
-            }
-          );
-
-          if (payment.redirectUrl) {
-            setSubmitState({
-              tone: 'info',
-              text: `Заказ ${response.orderNumber} сохранен. Перенаправляем на страницу оплаты Ozon...`
-            });
-            window.location.assign(payment.redirectUrl);
-            return;
+      try {
+        const payment = await apiRequest<OzonPaymentInitResponse>(
+          `/orders/${encodeURIComponent(response.orderNumber)}/payments/ozon/init`,
+          {
+            method: 'POST'
           }
+        );
 
+        if (payment.redirectUrl) {
           setSubmitState({
-            tone: 'success',
-            text: `Заказ ${response.orderNumber} сохранен. ${response.paymentMessage}`
+            tone: 'info',
+            text: `Заказ ${response.orderNumber} сохранен. Перенаправляем на страницу оплаты Ozon...`
           });
-          return;
-        } catch (error) {
-          setSubmitState({
-            tone: 'error',
-            text:
-              error instanceof Error
-                ? `Заказ ${response.orderNumber} сохранен, но не удалось запустить оплату Ozon: ${error.message}`
-                : `Заказ ${response.orderNumber} сохранен, но оплата Ozon не стартовала.`
-          });
+          window.location.assign(payment.redirectUrl);
           return;
         }
-      }
 
-      setSubmitState({
-        tone: 'success',
-        text: `Заказ ${response.orderNumber} сохранен. ${response.paymentMessage}`
-      });
+        setSubmitState({
+          tone: 'success',
+          text: `Заказ ${response.orderNumber} сохранен. ${response.paymentMessage}`
+        });
+      } catch (error) {
+        setSubmitState({
+          tone: 'error',
+          text:
+            error instanceof Error
+              ? `Заказ ${response.orderNumber} сохранен, но не удалось запустить оплату Ozon: ${error.message}`
+              : `Заказ ${response.orderNumber} сохранен, но оплата Ozon не стартовала.`
+        });
+      }
     } catch (error) {
       setSubmitState({
         tone: 'error',
@@ -365,6 +356,7 @@ export default function CheckoutPage() {
 
           <div className="glass-panel">
             <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
+              <input type="hidden" {...register('paymentMethod')} value="OZON_ACQUIRING" />
               <div className="grid gap-4 md:grid-cols-2">
                 <Input label="Имя" error={errors.name?.message} {...register('name')} />
                 <Input label="Телефон" error={errors.phone?.message} {...register('phone')} />
@@ -385,16 +377,13 @@ export default function CheckoutPage() {
               <p className="-mt-2 text-sm text-muted">
                 {deliveryOptions.find((option) => option.value === deliveryMethod)?.hint}
               </p>
-              <Select label="Способ оплаты" error={errors.paymentMethod?.message} {...register('paymentMethod')}>
-                {paymentOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-              <p className="-mt-2 text-sm text-muted">
-                {paymentOptions.find((option) => option.value === watch('paymentMethod'))?.hint}
-              </p>
+              <div className="rounded-[1.4rem] border border-line/70 bg-white/80 px-5 py-4">
+                <p className="text-sm uppercase tracking-[0.28em] text-brand/70">Оплата</p>
+                <p className="mt-2 text-base font-semibold text-ink">Защищенная страница Ozon</p>
+                <p className="mt-2 text-sm text-muted">
+                  После подтверждения заказа вы сразу перейдете на страницу оплаты Ozon Acquiring.
+                </p>
+              </div>
               <Textarea
                 label="Комментарий к заказу"
                 placeholder="Комментарий по доставке, код домофона, удобное время связи"
@@ -403,11 +392,7 @@ export default function CheckoutPage() {
               />
               {submitState ? <StatusBanner tone={submitState.tone} text={submitState.text} /> : null}
               <Button type="submit" disabled={isSubmitting || items.length === 0}>
-                {isSubmitting
-                  ? 'Оформляем заказ...'
-                  : watch('paymentMethod') === 'OZON_ACQUIRING'
-                    ? 'Перейти к оплате Ozon'
-                    : 'Отправить заказ'}
+                {isSubmitting ? 'Оформляем заказ...' : 'Оплатить'}
               </Button>
             </form>
           </div>
