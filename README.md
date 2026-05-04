@@ -66,6 +66,9 @@
 - `GET /api/products`
 - `POST /api/leads`
 - `POST /api/orders`
+- `POST /api/orders/:orderNumber/payments/ozon/init`
+- `POST /api/orders/:orderNumber/payments/ozon/sync`
+- `POST /api/payments/ozon/webhook`
 - `POST /api/subscriptions`
 - `POST /api/delivery/calculate`
 - Базовая защита: `helmet`, JSON size limit, `express-rate-limit`, серверная валидация `Zod`, sanitize, единый error handler.
@@ -75,6 +78,7 @@
 - Каталог хранится не в JSX, а в seed-слое сервера и отдается через API.
 - Доставка реализована как честный mock calculator с абстракцией под будущую интеграцию.
 - Оплата реализована как честный placeholder service без ложной симуляции эквайринга.
+- Подготовлен отдельный integration-ready слой под `Ozon Acquiring`: init оплаты, sync статуса, проверка webhook-подписи и поля в БД для внешних payment ids.
 - Заявки, заказы и запросы на подписку сохраняются в SQLite.
 
 ## 4. Schema и migrations
@@ -83,6 +87,7 @@
 
 - `server/prisma/schema.prisma`
 - `server/prisma/migrations/20260319170000_init/migration.sql`
+- `server/prisma/migrations/20260426170000_ozon_acquiring_prep/migration.sql`
 
 Таблицы:
 
@@ -117,6 +122,18 @@ RATE_LIMIT_WINDOW_MS=60000
 RATE_LIMIT_MAX=60
 FREE_DELIVERY_THRESHOLD_KOPECKS=350000
 DEFAULT_DELIVERY_SURCHARGE_KOPECKS=12000
+OZON_ACQUIRING_ENABLED=false
+OZON_ACQUIRING_TEST_MODE=false
+OZON_ACQUIRING_API_URL="https://api.ozon.ru"
+OZON_ACQUIRING_ACCESS_KEY=""
+OZON_ACQUIRING_SECRET_KEY=""
+OZON_ACQUIRING_NOTIFICATION_SECRET_KEY=""
+OZON_ACQUIRING_REDIRECT_URL="http://localhost:5173/checkout"
+OZON_ACQUIRING_SUCCESS_URL="http://localhost:5173/checkout?payment=success"
+OZON_ACQUIRING_FAIL_URL="http://localhost:5173/checkout?payment=failed"
+OZON_ACQUIRING_NOTIFICATION_URL="http://localhost:4000/api/payments/ozon/webhook"
+OZON_ACQUIRING_TIMEOUT_MS=15000
+OZON_ACQUIRING_PAYMENT_TTL_SECONDS=1800
 VITE_API_BASE_URL="/api"
 VITE_PROXY_TARGET="http://localhost:4000"
 ```
@@ -278,12 +295,56 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 ## 11. Комментарии по дальнейшему росту
 
-- Реальную оплату подключать через `server/src/services/payment.service.ts`
+- Реальную оплату подключать через `server/src/services/payments/`
 - Реальную доставку подключать через `server/src/services/delivery.service.ts`
 - Простую админку можно добавлять отдельным закрытым разделом на этом же API
 - При росте нагрузки можно оставить фронтенд без изменений и перевести backend с SQLite на PostgreSQL
 
-## 12. Замена изображений
+## 12. Ozon Acquiring
+
+В проект добавлена подготовка под `Ozon Acquiring` на основе локально сохраненной документации из архива `Документация Ozon Acquiring API.webarchive`.
+
+Что уже подготовлено:
+
+- env-параметры под ключи, callback URL и timeout;
+- поля заказа для хранения `paymentProvider`, внешнего `paymentId`, merchant `extId`, raw-статуса и webhook-метаданных;
+- backend-роуты:
+  - `POST /api/orders/:orderNumber/payments/ozon/init`
+  - `POST /api/orders/:orderNumber/payments/ozon/sync`
+  - `POST /api/payments/ozon/webhook`
+- генерация `requestSign` для:
+  - `POST /v1/createPayment`
+  - `POST /v1/getPaymentDetails`
+  - `POST /v1/cancelPayment`
+  - `POST /v1/refundPayment`
+- проверка `requestSign` для webhook-уведомлений Ozon.
+
+Поддержанный сценарий:
+
+- магазин создает локальный заказ как и раньше;
+- позже фронтенд или админка вызывает `init` для этого заказа;
+- backend создает попытку оплаты в Ozon и сохраняет `paymentId`, `extId`, `redirectUrl`;
+- webhook Ozon обновляет `paymentStatus` заказа;
+- при необходимости backend может принудительно подтянуть актуальный статус через `sync`.
+
+Что понадобится перед запуском:
+
+- `OZON_ACQUIRING_ACCESS_KEY`
+- `OZON_ACQUIRING_SECRET_KEY`
+- `OZON_ACQUIRING_NOTIFICATION_SECRET_KEY`
+- рабочий HTTPS URL для `OZON_ACQUIRING_NOTIFICATION_URL`
+- подтвержденные URLs возврата после оплаты
+
+Какие правила подписи заложены в код:
+
+- `POST /v1/createPayment`: `extId + accessKey + secretKey`
+- `POST /v1/getPaymentDetails`: `id + accessKey + secretKey`
+- `POST /v1/cancelPayment`: `id + accessKey + secretKey`
+- `POST /v1/refundPayment`: `extId + paymentId + accessKey + secretKey`
+- webhook по заказу: `SHA256("{accessKey}|{orderID}|{transactionID}|{extOrderID}|{amount}|{currencyCode}|{notificationSecretKey}")`
+- webhook для самостоятельной оплаты: `SHA256("{accessKey}|||{extTransactionID}|{amount}|{currencyCode}|{notificationSecretKey}")`
+
+## 13. Замена изображений
 
 Текущие брендовые placeholders лежат в:
 

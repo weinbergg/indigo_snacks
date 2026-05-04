@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { deliveryOptions, paymentOptions } from '../data/brand';
@@ -10,7 +10,12 @@ import {
   type CheckoutFormValues
 } from '../lib/validation';
 import { cartSelectors, useCartStore } from '../store/cart';
-import type { DeliveryQuote, OrderResponse } from '../types/api';
+import type {
+  DeliveryQuote,
+  OrderResponse,
+  OzonPaymentInitResponse,
+  OzonPaymentSyncResponse
+} from '../types/api';
 import { Container } from '../components/ui/Container';
 import { SectionHeading } from '../components/ui/SectionHeading';
 import { Input } from '../components/ui/Input';
@@ -21,6 +26,7 @@ import { StatusBanner } from '../components/ui/StatusBanner';
 import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function CheckoutPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const items = useCartStore((state) => state.items);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -102,6 +108,79 @@ export default function CheckoutPage() {
     };
   }, [deliveryMethod, items.length, subtotalKopecks, totalWeightGrams]);
 
+  useEffect(() => {
+    const paymentResult = searchParams.get('payment');
+    const orderNumber = searchParams.get('order');
+
+    if (!paymentResult) {
+      return;
+    }
+
+    if (!orderNumber) {
+      setSubmitState({
+        tone: paymentResult === 'success' ? 'info' : 'error',
+        text:
+          paymentResult === 'success'
+            ? 'Возврат после оплаты выполнен, но номер заказа не передан в URL.'
+            : 'Оплата не была завершена. Номер заказа не передан в URL.'
+      });
+      return;
+    }
+
+    let cancelled = false;
+
+    setSubmitState({
+      tone: 'info',
+      text: `Проверяем статус оплаты заказа ${orderNumber}...`
+    });
+
+    apiRequest<OzonPaymentSyncResponse>(
+      `/orders/${encodeURIComponent(orderNumber)}/payments/ozon/sync`,
+      {
+        method: 'POST'
+      }
+    )
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+
+        const isPaid = result.paymentStatus === 'PAID';
+        setSubmitState({
+          tone: isPaid ? 'success' : paymentResult === 'failed' ? 'error' : 'info',
+          text: isPaid
+            ? `Оплата заказа ${result.orderNumber} подтверждена.`
+            : `Заказ ${result.orderNumber} сохранен. Текущий статус оплаты: ${result.paymentStatus}.`
+        });
+      })
+      .catch((error: Error) => {
+        if (cancelled) {
+          return;
+        }
+
+        setSubmitState({
+          tone: paymentResult === 'failed' ? 'error' : 'info',
+          text:
+            error.message ||
+            `Не удалось проверить статус оплаты заказа ${orderNumber}.`
+        });
+      })
+      .finally(() => {
+        if (cancelled) {
+          return;
+        }
+
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete('payment');
+        nextParams.delete('order');
+        setSearchParams(nextParams, { replace: true });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, setSearchParams]);
+
   async function onSubmit(values: CheckoutFormValues) {
     if (items.length === 0) {
       setSubmitState({ tone: 'error', text: 'Корзина пуста. Добавьте товары из каталога.' });
@@ -122,10 +201,6 @@ export default function CheckoutPage() {
         })
       });
 
-      setSubmitState({
-        tone: 'success',
-        text: `Заказ ${response.orderNumber} сохранен. ${response.paymentMessage}`
-      });
       clearCart();
       setDeliveryQuote(null);
       reset({
@@ -138,6 +213,46 @@ export default function CheckoutPage() {
         comment: '',
         deliveryMethod: 'CDEK',
         paymentMethod: 'ONLINE_PLACEHOLDER'
+      });
+
+      if (values.paymentMethod === 'OZON_ACQUIRING') {
+        try {
+          const payment = await apiRequest<OzonPaymentInitResponse>(
+            `/orders/${encodeURIComponent(response.orderNumber)}/payments/ozon/init`,
+            {
+              method: 'POST'
+            }
+          );
+
+          if (payment.redirectUrl) {
+            setSubmitState({
+              tone: 'info',
+              text: `Заказ ${response.orderNumber} сохранен. Перенаправляем на страницу оплаты Ozon...`
+            });
+            window.location.assign(payment.redirectUrl);
+            return;
+          }
+
+          setSubmitState({
+            tone: 'success',
+            text: `Заказ ${response.orderNumber} сохранен. ${response.paymentMessage}`
+          });
+          return;
+        } catch (error) {
+          setSubmitState({
+            tone: 'error',
+            text:
+              error instanceof Error
+                ? `Заказ ${response.orderNumber} сохранен, но не удалось запустить оплату Ozon: ${error.message}`
+                : `Заказ ${response.orderNumber} сохранен, но оплата Ozon не стартовала.`
+          });
+          return;
+        }
+      }
+
+      setSubmitState({
+        tone: 'success',
+        text: `Заказ ${response.orderNumber} сохранен. ${response.paymentMessage}`
       });
     } catch (error) {
       setSubmitState({
@@ -288,7 +403,11 @@ export default function CheckoutPage() {
               />
               {submitState ? <StatusBanner tone={submitState.tone} text={submitState.text} /> : null}
               <Button type="submit" disabled={isSubmitting || items.length === 0}>
-                {isSubmitting ? 'Оформляем заказ...' : 'Отправить заказ'}
+                {isSubmitting
+                  ? 'Оформляем заказ...'
+                  : watch('paymentMethod') === 'OZON_ACQUIRING'
+                    ? 'Перейти к оплате Ozon'
+                    : 'Отправить заказ'}
               </Button>
             </form>
           </div>

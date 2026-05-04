@@ -12,6 +12,7 @@ const orderSchema = z.object({
   comment: optionalTextSchema,
   deliveryMethod: z.enum(['CDEK', 'OZON_PICKUP', 'POST_COURIER']),
   paymentMethod: z.enum([
+    'OZON_ACQUIRING',
     'ONLINE_PLACEHOLDER',
     'PAYMENT_LINK_LATER',
     'MANAGER_COORDINATION'

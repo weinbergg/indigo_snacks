@@ -16,12 +16,14 @@ export function HowToOrderSection() {
         <div className="mt-8 grid gap-5 md:grid-cols-3 md:auto-rows-fr">
           {orderingSteps.map((item, index) => (
             <Reveal key={item.step} delay={index * 0.08} className="h-full">
-              <article className="glass-panel interactive-panel flex h-full min-h-[15.5rem] flex-col">
-                <p className="font-display text-5xl text-brand/30">{item.step}</p>
-                <h3 className="mt-4 min-h-[3.5rem] text-2xl font-semibold leading-[1.08] text-ink">
+              <article className="glass-panel interactive-panel flex h-full min-h-[15rem] flex-col p-6 sm:p-7">
+                <p className="font-display text-[3rem] leading-none text-brand/28 sm:text-[3.35rem]">
+                  {item.step}
+                </p>
+                <h3 className="mt-3 min-h-[3.15rem] text-[2rem] font-semibold leading-[0.96] text-ink sm:text-[2.15rem]">
                   {item.title}
                 </h3>
-                <p className="mt-3 text-base leading-7 text-muted">{item.text}</p>
+                <p className="mt-3 text-[1.02rem] leading-7 text-muted">{item.text}</p>
               </article>
             </Reveal>
           ))}

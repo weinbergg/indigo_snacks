@@ -33,15 +33,26 @@ if (process.env.DATABASE_URL) {
   process.env.DATABASE_URL = resolveDatabaseUrl(process.env.DATABASE_URL);
 }
 
+const optionalStringSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value ? value : undefined));
+
+const booleanFlagSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => {
+    const normalized = value?.toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on';
+  });
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   DATABASE_URL: z.string().min(1),
-  CLIENT_ORIGIN: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => (value ? value : undefined)),
+  CLIENT_ORIGIN: optionalStringSchema,
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
   FREE_DELIVERY_THRESHOLD_KOPECKS: z.coerce.number().int().nonnegative().default(350000),
@@ -49,7 +60,19 @@ const envSchema = z.object({
     .number()
     .int()
     .nonnegative()
-    .default(12000)
+    .default(12000),
+  OZON_ACQUIRING_ENABLED: booleanFlagSchema,
+  OZON_ACQUIRING_TEST_MODE: booleanFlagSchema,
+  OZON_ACQUIRING_API_URL: z.string().trim().url().default('https://api.ozon.ru'),
+  OZON_ACQUIRING_ACCESS_KEY: optionalStringSchema,
+  OZON_ACQUIRING_SECRET_KEY: optionalStringSchema,
+  OZON_ACQUIRING_NOTIFICATION_SECRET_KEY: optionalStringSchema,
+  OZON_ACQUIRING_REDIRECT_URL: optionalStringSchema,
+  OZON_ACQUIRING_SUCCESS_URL: optionalStringSchema,
+  OZON_ACQUIRING_FAIL_URL: optionalStringSchema,
+  OZON_ACQUIRING_NOTIFICATION_URL: optionalStringSchema,
+  OZON_ACQUIRING_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  OZON_ACQUIRING_PAYMENT_TTL_SECONDS: z.coerce.number().int().positive().default(1800)
 });
 
 export const env = envSchema.parse(process.env);

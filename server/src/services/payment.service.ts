@@ -1,5 +1,17 @@
-export function getPaymentPlan(method: 'ONLINE_PLACEHOLDER' | 'PAYMENT_LINK_LATER' | 'MANAGER_COORDINATION') {
+export function getPaymentPlan(
+  method:
+    | 'OZON_ACQUIRING'
+    | 'ONLINE_PLACEHOLDER'
+    | 'PAYMENT_LINK_LATER'
+    | 'MANAGER_COORDINATION'
+) {
   switch (method) {
+    case 'OZON_ACQUIRING':
+      return {
+        paymentStatus: 'PENDING',
+        paymentMessage:
+          'После оформления откроем защищенную страницу оплаты Ozon Acquiring.'
+      };
     case 'ONLINE_PLACEHOLDER':
       return {
         paymentStatus: 'PENDING',
@@ -26,4 +38,4 @@ export function getPaymentPlan(method: 'ONLINE_PLACEHOLDER' | 'PAYMENT_LINK_LATE
   }
 }
 
-// Future adapter point: connect YooKassa / CloudPayments / Stripe or another gateway here.
+// Manual fallback layer. Real gateways live in server/src/services/payments/.

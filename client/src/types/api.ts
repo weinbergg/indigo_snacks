@@ -1,5 +1,6 @@
 export type DeliveryMethodCode = 'CDEK' | 'OZON_PICKUP' | 'POST_COURIER';
 export type PaymentMethodCode =
+  | 'OZON_ACQUIRING'
   | 'ONLINE_PLACEHOLDER'
   | 'PAYMENT_LINK_LATER'
   | 'MANAGER_COORDINATION';
@@ -59,4 +60,24 @@ export interface OrderResponse {
   orderNumber: string;
   totalKopecks: number;
   paymentMessage: string;
+}
+
+export interface OzonPaymentInitResponse {
+  orderNumber: string;
+  paymentExtId?: string | null;
+  paymentId: string;
+  paymentStatus: string;
+  provider: 'OZON_ACQUIRING';
+  rawStatus?: string | null;
+  redirectUrl?: string | null;
+  reused: boolean;
+}
+
+export interface OzonPaymentSyncResponse {
+  orderNumber: string;
+  paymentId: string;
+  paymentStatus: string;
+  provider: 'OZON_ACQUIRING';
+  rawStatus?: string | null;
+  transactionUid?: string | null;
 }

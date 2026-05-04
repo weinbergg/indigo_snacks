@@ -76,13 +76,23 @@ model Order {
   deliveryMethod       String
   deliveryQuoteLabel   String
   paymentMethod        String
+  paymentProvider      String?
+  paymentProviderId    String?
+  paymentExternalId    String?
+  paymentRedirectUrl   String?
   paymentStatus        String             @default("PENDING")
+  paymentRawStatus     String?
   paymentNote          String?
+  paymentLastError     String?
+  paymentMetaJson      String             @default("{}")
+  paymentLastWebhookAt DateTime?
   status               String             @default("NEW")
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   items                OrderItem[]
 
+  @@index([paymentProviderId])
+  @@index([paymentExternalId])
   @@map("orders")
 }
 

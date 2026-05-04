@@ -89,6 +89,7 @@ export const checkoutFormSchema = z.object({
     .transform((value) => value || undefined),
   deliveryMethod: z.enum(['CDEK', 'OZON_PICKUP', 'POST_COURIER']),
   paymentMethod: z.enum([
+    'OZON_ACQUIRING',
     'ONLINE_PLACEHOLDER',
     'PAYMENT_LINK_LATER',
     'MANAGER_COORDINATION'
