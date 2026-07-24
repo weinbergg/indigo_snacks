@@ -8,7 +8,7 @@ import { formatCurrency, pluralizeItems } from '../lib/format';
 import {
   checkoutFormSchema,
   type CheckoutFormValues
-} from '../lib/validation';
+} from '../lib/checkoutValidation';
 import { cartSelectors, useCartStore } from '../store/cart';
 import type {
   DeliveryQuote,
