@@ -28,10 +28,16 @@ export function HeroSection() {
                 держать дома.
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <Link to="/catalog" className={getButtonClassName({ variant: 'primary' })}>
+                <Link
+                  to="/catalog"
+                  className={getButtonClassName({ variant: 'primary', className: 'sm:min-w-[17rem]' })}
+                >
                   Выбрать фасовку
                 </Link>
-                <Link to="/#lead-form" className={getButtonClassName({ variant: 'secondary' })}>
+                <Link
+                  to="/#lead-form"
+                  className={getButtonClassName({ variant: 'secondary', className: 'sm:min-w-[17rem]' })}
+                >
                   Задать вопрос
                 </Link>
               </div>

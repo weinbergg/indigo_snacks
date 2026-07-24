@@ -47,7 +47,9 @@ export function AboutSection() {
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/65">
                     Сейчас в наличии
                   </p>
-                  <p className="mt-3 font-display text-3xl">50 / 100 / 500 г</p>
+                  <p className="mt-3 whitespace-nowrap font-display text-3xl leading-tight sm:text-[3.1rem]">
+                    50 / 100 / 500&nbsp;г
+                  </p>
                   <p className="mt-3 text-sm leading-7 text-white/75">
                     Линейка начинается от 250 ₽ и позволяет выбрать свой ритм покупки.
                   </p>
