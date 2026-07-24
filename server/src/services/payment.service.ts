@@ -10,7 +10,7 @@ export function getPaymentPlan(
       return {
         paymentStatus: 'PENDING',
         paymentMessage:
-          'После оформления сразу откроется защищенная страница оплаты Ozon Acquiring.'
+          'После оформления сразу откроется защищенная страница оплаты.'
       };
     case 'ONLINE_PLACEHOLDER':
       return {

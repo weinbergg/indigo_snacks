@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
-import type { OzonMoney, OzonNotificationPayload, OzonResolvedNotificationPayload } from './ozon-acquiring.types';
+import type { OzonNotificationPayload, OzonResolvedNotificationPayload } from './ozon-acquiring.types';
 
 function sha256Hex(value: string) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
@@ -17,29 +17,20 @@ function toStringValue(value: number | string | undefined | null) {
   return String(value);
 }
 
-export function signOzonCreateOrder(input: {
+export function signOzonCreatePayment(input: {
   accessKey: string;
-  amount: OzonMoney;
-  expiresAt?: string;
   extId: string;
-  fiscalizationType?: string;
-  paymentAlgorithm: string;
   secretKey: string;
 }) {
-  return sha256Hex(
-    `${input.accessKey}${input.expiresAt ?? ''}${input.extId}${input.fiscalizationType ?? ''}${input.paymentAlgorithm}${input.amount.currencyCode}${input.amount.value}${input.secretKey}`
-  );
+  return sha256Hex(`${input.extId}${input.accessKey}${input.secretKey}`);
 }
 
-export function signOzonGetOrder(input: {
+export function signOzonGetOrCancelPayment(input: {
   accessKey: string;
-  extId?: string;
-  id?: string;
+  id: string;
   secretKey: string;
 }) {
-  return sha256Hex(
-    `${input.id ?? ''}${input.extId ?? ''}${input.accessKey}${input.secretKey}`
-  );
+  return sha256Hex(`${input.id}${input.accessKey}${input.secretKey}`);
 }
 
 export function resolveOzonNotificationPayload(

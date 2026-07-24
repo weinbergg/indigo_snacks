@@ -3,61 +3,41 @@ export type OzonMoney = {
   value: string;
 };
 
-export type OzonOrderSnapshot = {
-  expiresAt?: string;
-  extId?: string;
-  fiscalizationType?: string;
-  id?: string;
-  isTestMode?: boolean;
-  items?: Array<{
-    extId?: string;
-    id?: string;
-    name?: string;
-    price?: OzonMoney;
-    quantity?: number;
-    sku?: number;
-    type?: string;
-    vat?: string;
-  }>;
-  mode?: string;
-  number?: string;
-  payLink?: string;
-  paymentAlgorithm?: string;
-  remainingAmount?: OzonMoney;
-  status?: string;
-};
-
-export type OzonCreateOrderItem = {
-  extId: string;
-  name: string;
-  price: OzonMoney;
-  quantity: number;
-  type?: 'TYPE_UNSPECIFIED';
-  vat: 'VAT_UNSPECIFIED';
-};
-
-export type OzonCreateOrderRequest = {
+export type OzonCreatePaymentRequest = {
   accessKey: string;
   amount: OzonMoney;
-  enableFiscalization?: boolean;
-  expiresAt?: string;
-  extData?: Record<string, string>;
   extId: string;
-  failUrl?: string;
-  fiscalizationType?: 'FISCAL_TYPE_SINGLE' | 'FISCAL_TYPE_UNSPECIFIED';
-  items?: OzonCreateOrderItem[];
-  mode?: 'MODE_FULL' | 'MODE_SHORTENED' | 'MODE_UNSPECIFIED';
   notificationUrl?: string;
-  paymentAlgorithm: 'PAY_ALGO_SMS' | 'PAY_ALGO_DMS';
-  receiptEmail?: string;
+  order?: {
+    amount: OzonMoney;
+    extId: string;
+    expiresAt?: string;
+    failUrl?: string;
+    notificationUrl?: string;
+    successUrl?: string;
+  };
+  payType: 'SBP';
+  redirectUrl: string;
   requestSign: string;
-  successUrl?: string;
+  ttl?: number;
+  userInfo?: {
+    extId?: string;
+    ipAddress?: string;
+  };
 };
 
-export type OzonCreateOrderResponse = {
+export type OzonCreatePaymentResponse = {
   order?: {
     extData?: Record<string, string>;
-    item?: OzonOrderSnapshot;
+    item?: {
+      expiresAt?: string;
+      extId?: string;
+      id?: string;
+      isTestMode?: boolean;
+      number?: string;
+      payLink?: string;
+      status?: string;
+    };
   };
   paymentDetails?: {
     paymentId?: string;
@@ -69,26 +49,29 @@ export type OzonCreateOrderResponse = {
   };
 };
 
-export type OzonGetOrderStatusRequest = {
+export type OzonGetPaymentDetailsRequest = {
   accessKey: string;
-  extId?: string;
-  id?: string;
+  id: string;
   requestSign: string;
 };
 
-export type OzonGetOrderStatusResponse = {
-  extId?: string;
-  id?: string;
-  isTestMode?: boolean;
-  item?: OzonOrderSnapshot;
-  order?: {
-    extData?: Record<string, string>;
-    item?: OzonOrderSnapshot;
-  };
-  originalAmount?: OzonMoney;
-  paymentScheme?: Record<string, unknown>;
-  remainingAmount?: OzonMoney;
-  status?: string;
+export type OzonGetPaymentDetailsResponse = {
+  items?: Array<{
+    amount?: OzonMoney;
+    extId?: string;
+    operationTime?: string;
+    operationType?: string;
+    paymentData?: {
+      sbp?: {
+        createdSubscriptionToken?: string;
+        memberId?: string;
+        nspkId?: string;
+        payerPhoneLast4?: string;
+      };
+    };
+    status?: string;
+    transactionUid?: string;
+  }>;
 };
 
 export type OzonNotificationPayload = {
