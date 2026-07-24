@@ -13,3 +13,5 @@ server/prisma/dev.db-shm
 server/prisma/dev.db-wal
 server/generated
 coverage
+__pycache__/
+*.pyc
