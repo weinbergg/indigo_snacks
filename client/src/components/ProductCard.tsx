@@ -2,6 +2,7 @@ import type { Product } from '../types/api';
 import { formatCurrency, formatWeight } from '../lib/format';
 import { Button } from './ui/Button';
 import { Reveal } from './Reveal';
+import { Tilt } from './Tilt';
 import { useCartStore } from '../store/cart';
 
 interface ProductCardProps {
@@ -35,17 +36,22 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Reveal className="glass-panel overflow-hidden">
       <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
-        <div className="relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-brand-soft/55 p-6 sm:min-h-[30rem] lg:min-h-[34rem]">
-          <div className="absolute inset-6 rounded-[1.5rem] border border-white/50" />
+        <Tilt
+          className="group relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-brand-soft/55 p-6 sm:min-h-[30rem] lg:min-h-[34rem]"
+          max={6}
+          scale={1.01}
+          glare
+        >
+          <div className="absolute inset-6 z-[1] rounded-[1.5rem] border border-white/50" />
           <div className="absolute inset-8 overflow-hidden rounded-[1.5rem]">
             <img
               src={product.baseImage || '/assets/brand/product-pack.jpeg'}
               alt={`${product.name} Индиго`}
-              className="h-full w-full object-cover object-center"
+              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
               loading="lazy"
             />
           </div>
-        </div>
+        </Tilt>
 
         <div>
           {product.badge ? (
@@ -100,7 +106,7 @@ export function ProductCard({ product }: ProductCardProps) {
                       <div className="flex min-h-12 w-[10.5rem] items-center justify-between rounded-full border border-line/80 bg-white px-2 shadow-[0_6px_16px_rgba(18,84,86,0.07)]">
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-ink transition hover:bg-brand-soft/60"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-ink transition hover:bg-brand-soft/60 active:scale-90"
                           onClick={() => handleDecrease(variant.id)}
                           aria-label="Уменьшить количество"
                           disabled={!variant.isAvailable}
@@ -112,7 +118,7 @@ export function ProductCard({ product }: ProductCardProps) {
                         </span>
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-ink transition hover:bg-brand-soft/60"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-ink transition hover:bg-brand-soft/60 active:scale-90"
                           onClick={() => handleIncrease(variant.id)}
                           aria-label="Увеличить количество"
                           disabled={!variant.isAvailable}

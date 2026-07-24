@@ -5,6 +5,8 @@ interface BrandDogBadgeProps {
   frameClassName?: string;
   dogClassName?: string;
   showInnerRings?: boolean;
+  /** Плавное «дыхание» собаки: лёгкое покачивание и масштаб. */
+  animated?: boolean;
   alt?: string;
 }
 
@@ -15,6 +17,7 @@ export function BrandDogBadge({
   frameClassName,
   dogClassName,
   showInnerRings = false,
+  animated = false,
   alt = ''
 }: BrandDogBadgeProps) {
   const badgeClassName = [
@@ -32,7 +35,13 @@ export function BrandDogBadge({
   const frameLayerClassName = ['pointer-events-none absolute inset-[8.5%] z-[1] opacity-80', frameClassName]
     .filter(Boolean)
     .join(' ');
-  const dogLayerClassName = ['absolute inset-0 z-[2] h-full w-full object-contain opacity-85', dogClassName]
+  const dogLayerClassName = [
+    'absolute inset-0 z-[2] h-full w-full object-contain opacity-85',
+    animated
+      ? 'motion-safe:animate-[badge-breathe_6.5s_ease-in-out_infinite] [transform-origin:50%_62%]'
+      : '',
+    dogClassName
+  ]
     .filter(Boolean)
     .join(' ');
 

@@ -30,7 +30,7 @@ export function Header() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className="text-sm font-medium text-muted transition hover:text-ink"
+                className="relative text-sm font-medium text-muted transition after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-brand after:transition-all after:duration-300 hover:text-ink hover:after:w-full"
               >
                 {item.label}
               </NavLink>
