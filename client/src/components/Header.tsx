@@ -38,20 +38,20 @@ export function Header() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Link
-              to="/checkout"
-              className="text-sm font-medium text-muted transition hover:text-ink"
-            >
-              B2B заявка {itemCount > 0 ? `(${itemCount})` : ''}
-            </Link>
             <a
               href={ozonProductUrl}
               target="_blank"
               rel="noreferrer"
-              className={getButtonClassName({ variant: 'secondary', className: 'px-5' })}
+              className="text-sm font-medium text-muted transition hover:text-ink"
             >
               Ozon
             </a>
+            <Link
+              to="/checkout"
+              className={getButtonClassName({ variant: 'secondary', className: 'px-5' })}
+            >
+              Оставить заявку {itemCount > 0 ? `(${itemCount})` : ''}
+            </Link>
           </div>
 
           <button
@@ -98,14 +98,14 @@ export function Header() {
                 className="rounded-2xl border border-transparent bg-white/55 px-4 py-3 text-sm font-medium text-muted transition hover:border-line/70 hover:bg-white/85 hover:text-ink"
                 onClick={() => setIsOpen(false)}
               >
-                Купить на Ozon
+                Ozon
               </a>
               <Link
                 to="/checkout"
                 className={getButtonClassName({ variant: 'secondary', className: 'mt-2 w-full justify-center' })}
                 onClick={() => setIsOpen(false)}
               >
-                B2B заявка {itemCount > 0 ? `(${itemCount})` : ''}
+                Оставить заявку {itemCount > 0 ? `(${itemCount})` : ''}
               </Link>
             </nav>
           </div>

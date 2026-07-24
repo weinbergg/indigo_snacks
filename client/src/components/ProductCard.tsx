@@ -12,6 +12,17 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const [addedVariantId, setAddedVariantId] = useState<string | null>(null);
+  const [variantQuantities, setVariantQuantities] = useState<Record<string, number>>({});
+
+  const getQuantity = (variantId: string) => variantQuantities[variantId] ?? 1;
+
+  const setQuantity = (variantId: string, value: number) => {
+    const nextValue = Number.isFinite(value) ? Math.min(99, Math.max(1, Math.trunc(value))) : 1;
+    setVariantQuantities((state) => ({
+      ...state,
+      [variantId]: nextValue
+    }));
+  };
 
   return (
     <Reveal className="glass-panel overflow-hidden">
@@ -66,7 +77,7 @@ export function ProductCard({ product }: ProductCardProps) {
                     </div>
                   </div>
 
-                  <div className="flex min-w-[180px] flex-col gap-3 sm:items-end">
+                  <div className="flex min-w-[220px] flex-col gap-3 sm:items-end">
                     <div className="text-right">
                       <p className="text-xl font-semibold text-ink">
                         {formatCurrency(variant.priceKopecks)}
@@ -76,6 +87,36 @@ export function ProductCard({ product }: ProductCardProps) {
                           {formatCurrency(variant.compareAtPriceKopecks)}
                         </p>
                       ) : null}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink transition hover:border-brand/40"
+                        onClick={() => setQuantity(variant.id, getQuantity(variant.id) - 1)}
+                        aria-label="Уменьшить количество"
+                        disabled={!variant.isAvailable}
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={getQuantity(variant.id)}
+                        onChange={(event) => setQuantity(variant.id, Number(event.target.value))}
+                        className="input-shell h-9 w-16 px-2 py-1 text-center"
+                        aria-label="Количество упаковок"
+                        disabled={!variant.isAvailable}
+                      />
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink transition hover:border-brand/40"
+                        onClick={() => setQuantity(variant.id, getQuantity(variant.id) + 1)}
+                        aria-label="Увеличить количество"
+                        disabled={!variant.isAvailable}
+                      >
+                        +
+                      </button>
                     </div>
                     <Button
                       variant={variant.isAvailable ? 'primary' : 'secondary'}
@@ -90,7 +131,7 @@ export function ProductCard({ product }: ProductCardProps) {
                           weightGrams: variant.weightGrams,
                           unitPriceKopecks: variant.priceKopecks,
                           image: variant.image || product.baseImage
-                        });
+                        }, getQuantity(variant.id));
                         setAddedVariantId(variant.id);
                       }}
                     >
