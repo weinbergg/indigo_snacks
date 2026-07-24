@@ -98,17 +98,11 @@ export function HeroSection() {
               <div className="absolute inset-3 rounded-full border border-white/46 transition duration-300 group-hover:scale-[1.01]" />
               <div className="absolute inset-6 rounded-full border border-white/24 transition duration-300" />
 
-              {reduceMotion ? null : (
-                <div className="pointer-events-none absolute inset-0 animate-[ring-spin_22s_linear_infinite]">
-                  <span className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-brand-accent/80 shadow-[0_0_16px_rgba(166,137,90,0.7)]" />
-                </div>
-              )}
-
               <div className="relative w-full">
                 <Tilt
                   className="relative rounded-full bg-[#d6e7e2] p-4 shadow-lift transition-shadow duration-300 group-hover:shadow-[0_28px_80px_rgba(18,84,86,0.18)] sm:p-6"
-                  max={14}
-                  scale={1.045}
+                  max={7}
+                  scale={1.025}
                 >
                   <div className="relative z-10 mx-auto aspect-square w-full max-w-[30rem]">
                     <BrandDogBadge
@@ -116,7 +110,6 @@ export function HeroSection() {
                       shapeInsetClassName="inset-[7.4%] -translate-y-[3.8%]"
                       fillClassName="bg-[#d6e7e2]"
                       frameClassName="inset-[8%] -translate-y-[1.6%] opacity-85"
-                      animated
                       alt="Фирменная графичная собака бренда Индиго"
                     />
                   </div>

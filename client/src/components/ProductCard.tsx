@@ -38,8 +38,8 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
         <Tilt
           className="group relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-brand-soft/55 p-6 sm:min-h-[30rem] lg:min-h-[34rem]"
-          max={6}
-          scale={1.01}
+          max={4}
+          scale={1.008}
           glare
         >
           <div className="absolute inset-6 z-[1] rounded-[1.5rem] border border-white/50" />

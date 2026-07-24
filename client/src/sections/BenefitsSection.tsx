@@ -16,7 +16,7 @@ const benefitIcons: Record<BenefitIconName, LucideIcon> = {
 
 function BenefitIcon({ icon }: { icon: BenefitIconName }) {
   const Icon = benefitIcons[icon];
-  return <Icon className="h-7 w-7" strokeWidth={1.6} aria-hidden="true" />;
+  return <Icon className="h-9 w-9 sm:h-10 sm:w-10" strokeWidth={1.7} aria-hidden="true" />;
 }
 
 export function BenefitsSection() {
@@ -32,13 +32,13 @@ export function BenefitsSection() {
         <div className="mt-8 grid gap-5 md:grid-cols-3 md:auto-rows-fr">
           {benefits.map((benefit, index) => (
             <Reveal key={benefit.title} delay={index * 0.07} className="h-full">
-              <Tilt className="group h-full" max={6} scale={1.015}>
+              <Tilt className="group h-full" max={3.5} scale={1.01}>
                 <article className="glass-panel flex h-full min-h-[14.25rem] flex-col p-6 text-left shadow-soft transition-shadow duration-300 group-hover:shadow-lift sm:p-7">
-                  <div className="grid h-full grid-cols-[minmax(0,1fr)_4.5rem] gap-x-5 gap-y-3 sm:grid-cols-[minmax(0,1fr)_5rem]">
+                  <div className="grid h-full grid-cols-[minmax(0,1fr)_5rem] gap-x-5 gap-y-3 sm:grid-cols-[minmax(0,1fr)_5.5rem]">
                     <p className="font-display text-[2.9rem] leading-none text-brand/28 transition-colors duration-300 group-hover:text-brand/40 sm:text-[3.25rem]">
                       0{index + 1}
                     </p>
-                    <span className="row-span-3 flex h-14 w-14 items-center justify-center self-center justify-self-end rounded-[1.15rem] border border-brand/18 bg-gradient-to-b from-brand-soft/80 to-white text-brand/90 shadow-[0_8px_24px_rgba(18,84,86,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:rotate-[-4deg] sm:h-16 sm:w-16">
+                    <span className="row-span-3 flex h-[4.5rem] w-[4.5rem] items-center justify-center self-center justify-self-end rounded-[1.3rem] border border-brand/18 bg-gradient-to-b from-brand-soft/80 to-white text-brand/90 shadow-[0_8px_24px_rgba(18,84,86,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:rotate-[-4deg] sm:h-20 sm:w-20">
                       <BenefitIcon icon={benefit.icon} />
                     </span>
                     <h3 className="max-w-[10ch] text-[2rem] font-semibold leading-[0.96] text-ink sm:text-[2.15rem]">

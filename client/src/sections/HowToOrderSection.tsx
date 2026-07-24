@@ -17,7 +17,7 @@ export function HowToOrderSection() {
         <div className="mt-8 grid gap-5 md:grid-cols-3 md:auto-rows-fr">
           {orderingSteps.map((item, index) => (
             <Reveal key={item.step} delay={index * 0.08} className="h-full">
-              <Tilt className="group h-full" max={6} scale={1.015}>
+              <Tilt className="group h-full" max={3.5} scale={1.01}>
                 <article className="glass-panel flex h-full min-h-[15rem] flex-col p-6 shadow-soft transition-shadow duration-300 group-hover:shadow-lift sm:p-7">
                   <p className="font-display text-[3rem] leading-none text-brand/28 transition-colors duration-300 group-hover:text-brand/40 sm:text-[3.35rem]">
                     {item.step}

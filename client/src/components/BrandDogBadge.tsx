@@ -5,8 +5,6 @@ interface BrandDogBadgeProps {
   frameClassName?: string;
   dogClassName?: string;
   showInnerRings?: boolean;
-  /** Плавное «дыхание» + периодический наклон головы. */
-  animated?: boolean;
   alt?: string;
 }
 
@@ -28,7 +26,6 @@ export function BrandDogBadge({
   frameClassName,
   dogClassName,
   showInnerRings = false,
-  animated = false,
   alt = ''
 }: BrandDogBadgeProps) {
   const badgeClassName = [
@@ -50,27 +47,11 @@ export function BrandDogBadge({
     .filter(Boolean)
     .join(' ');
   const dogImageClassName = [
-    'absolute inset-0 h-full w-full object-contain opacity-85',
+    'absolute inset-0 z-[2] h-full w-full object-contain opacity-85',
     dogClassName
   ]
     .filter(Boolean)
     .join(' ');
-
-  // Живой пёс: наклон головы вложен в «дыхание», заливка-подложка движется
-  // вместе с иллюстрацией, чтобы линии фона не проступали по краям.
-  const dogGroup = animated ? (
-    <span className="absolute inset-0 z-[2] motion-safe:animate-[badge-breathe_7.5s_ease-in-out_infinite]">
-      <span className="absolute inset-0 [transform-origin:50%_42%] motion-safe:animate-[dog-head-tilt_17s_ease-in-out_infinite]">
-        <span className={fillLayerClassName} style={dogMaskStyle} />
-        <img src="/assets/brand/dog-illustration.png" alt={alt} className={dogImageClassName} />
-      </span>
-    </span>
-  ) : (
-    <>
-      <span className={fillLayerClassName} style={dogMaskStyle} />
-      <img src="/assets/brand/dog-illustration.png" alt={alt} className={dogImageClassName} />
-    </>
-  );
 
   return (
     <span className={badgeClassName} aria-hidden="true">
@@ -83,7 +64,10 @@ export function BrandDogBadge({
           <span className="pointer-events-none absolute inset-[18%] z-[1] rounded-full border border-brand/15" />
         </>
       ) : null}
-      <span className={shapeLayerClassName}>{dogGroup}</span>
+      <span className={shapeLayerClassName}>
+        <span className={fillLayerClassName} style={dogMaskStyle} />
+        <img src="/assets/brand/dog-illustration.png" alt={alt} className={dogImageClassName} />
+      </span>
     </span>
   );
 }
