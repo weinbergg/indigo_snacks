@@ -88,10 +88,10 @@ export function ProductCard({ product }: ProductCardProps) {
                         </p>
                       ) : null}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center rounded-full border border-line/80 bg-white/85 p-1 shadow-[0_6px_16px_rgba(18,84,86,0.07)]">
                       <button
                         type="button"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink transition hover:border-brand/40"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink transition hover:bg-brand-soft/60"
                         onClick={() => setQuantity(variant.id, getQuantity(variant.id) - 1)}
                         aria-label="Уменьшить количество"
                         disabled={!variant.isAvailable}
@@ -104,13 +104,13 @@ export function ProductCard({ product }: ProductCardProps) {
                         max={99}
                         value={getQuantity(variant.id)}
                         onChange={(event) => setQuantity(variant.id, Number(event.target.value))}
-                        className="input-shell h-9 w-16 px-2 py-1 text-center"
+                        className="h-8 w-14 border-x border-line/70 bg-transparent px-2 text-center text-sm font-semibold text-ink focus:outline-none"
                         aria-label="Количество упаковок"
                         disabled={!variant.isAvailable}
                       />
                       <button
                         type="button"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink transition hover:border-brand/40"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink transition hover:bg-brand-soft/60"
                         onClick={() => setQuantity(variant.id, getQuantity(variant.id) + 1)}
                         aria-label="Увеличить количество"
                         disabled={!variant.isAvailable}
@@ -121,6 +121,7 @@ export function ProductCard({ product }: ProductCardProps) {
                     <Button
                       variant={variant.isAvailable ? 'primary' : 'secondary'}
                       disabled={!variant.isAvailable}
+                      className="min-w-[9.5rem]"
                       onClick={() => {
                         addItem({
                           variantId: variant.id,
