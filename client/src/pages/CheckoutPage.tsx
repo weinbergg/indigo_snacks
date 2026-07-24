@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { deliveryOptions } from '../data/brand';
@@ -10,12 +10,7 @@ import {
   type CheckoutFormValues
 } from '../lib/checkoutValidation';
 import { cartSelectors, useCartStore } from '../store/cart';
-import type {
-  DeliveryQuote,
-  OrderResponse,
-  OzonPaymentInitResponse,
-  OzonPaymentSyncResponse
-} from '../types/api';
+import type { DeliveryQuote, OrderResponse } from '../types/api';
 import { Container } from '../components/ui/Container';
 import { SectionHeading } from '../components/ui/SectionHeading';
 import { Input } from '../components/ui/Input';
@@ -26,7 +21,6 @@ import { StatusBanner } from '../components/ui/StatusBanner';
 import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function CheckoutPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const items = useCartStore((state) => state.items);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -43,8 +37,8 @@ export default function CheckoutPage() {
   } | null>(null);
 
   usePageMeta(
-    'Корзина и оформление заказа | Индиго Снэкс',
-    'Оформление заказа Индиго: фасовки 50, 100 и 500 г, адрес доставки и подтверждение заказа.'
+    'B2B заявка | Индиго Снэкс',
+    'Заявка для B2B-покупателей Индиго: соберите фасовки, укажите контакты и детали поставки.'
   );
 
   const form = useForm<CheckoutFormValues>({
@@ -58,7 +52,7 @@ export default function CheckoutPage() {
       postalCode: '',
       comment: '',
       deliveryMethod: 'CDEK',
-      paymentMethod: 'OZON_ACQUIRING'
+      paymentMethod: 'MANAGER_COORDINATION'
     }
   });
 
@@ -108,79 +102,6 @@ export default function CheckoutPage() {
     };
   }, [deliveryMethod, items.length, subtotalKopecks, totalWeightGrams]);
 
-  useEffect(() => {
-    const paymentResult = searchParams.get('payment');
-    const orderNumber = searchParams.get('order');
-
-    if (!paymentResult) {
-      return;
-    }
-
-    if (!orderNumber) {
-      setSubmitState({
-        tone: paymentResult === 'success' ? 'info' : 'error',
-        text:
-          paymentResult === 'success'
-            ? 'Возврат после оплаты выполнен, но номер заказа не передан в URL.'
-            : 'Оплата не была завершена. Номер заказа не передан в URL.'
-      });
-      return;
-    }
-
-    let cancelled = false;
-
-      setSubmitState({
-        tone: 'info',
-        text: `Проверяем статус оплаты заказа ${orderNumber}...`
-      });
-
-    apiRequest<OzonPaymentSyncResponse>(
-      `/orders/${encodeURIComponent(orderNumber)}/payments/ozon/sync`,
-      {
-        method: 'POST'
-      }
-    )
-      .then((result) => {
-        if (cancelled) {
-          return;
-        }
-
-        const isPaid = result.paymentStatus === 'PAID';
-        setSubmitState({
-          tone: isPaid ? 'success' : paymentResult === 'failed' ? 'error' : 'info',
-          text: isPaid
-            ? `Оплата заказа ${result.orderNumber} подтверждена.`
-            : `Заказ ${result.orderNumber} сохранен. Текущий статус оплаты: ${result.paymentStatus}.`
-        });
-      })
-      .catch((error: Error) => {
-        if (cancelled) {
-          return;
-        }
-
-        setSubmitState({
-          tone: paymentResult === 'failed' ? 'error' : 'info',
-          text:
-            error.message ||
-            `Не удалось проверить статус оплаты заказа ${orderNumber}.`
-        });
-      })
-      .finally(() => {
-        if (cancelled) {
-          return;
-        }
-
-        const nextParams = new URLSearchParams(searchParams);
-        nextParams.delete('payment');
-        nextParams.delete('order');
-        setSearchParams(nextParams, { replace: true });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [searchParams, setSearchParams]);
-
   async function onSubmit(values: CheckoutFormValues) {
     if (items.length === 0) {
       setSubmitState({ tone: 'error', text: 'Корзина пуста. Добавьте товары из каталога.' });
@@ -194,6 +115,7 @@ export default function CheckoutPage() {
         method: 'POST',
         body: JSON.stringify({
           ...values,
+          paymentMethod: 'MANAGER_COORDINATION',
           items: items.map((item) => ({
             variantId: item.variantId,
             quantity: item.quantity
@@ -212,43 +134,16 @@ export default function CheckoutPage() {
         postalCode: '',
         comment: '',
         deliveryMethod: 'CDEK',
-        paymentMethod: 'OZON_ACQUIRING'
+        paymentMethod: 'MANAGER_COORDINATION'
       });
-
-      try {
-        const payment = await apiRequest<OzonPaymentInitResponse>(
-          `/orders/${encodeURIComponent(response.orderNumber)}/payments/ozon/init`,
-          {
-            method: 'POST'
-          }
-        );
-
-        if (payment.redirectUrl) {
-          setSubmitState({
-            tone: 'info',
-            text: `Заказ ${response.orderNumber} сохранен. Перенаправляем на страницу оплаты...`
-          });
-          window.location.assign(payment.redirectUrl);
-          return;
-        }
-
-        setSubmitState({
-          tone: 'success',
-          text: `Заказ ${response.orderNumber} сохранен. ${response.paymentMessage}`
-        });
-      } catch (error) {
-        setSubmitState({
-          tone: 'error',
-          text:
-            error instanceof Error
-              ? `Заказ ${response.orderNumber} сохранен, но не удалось открыть страницу оплаты: ${error.message}`
-              : `Заказ ${response.orderNumber} сохранен, но страница оплаты не открылась.`
-        });
-      }
+      setSubmitState({
+        tone: 'success',
+        text: `Заявка ${response.orderNumber} отправлена. Мы свяжемся с вами для согласования условий B2B.`
+      });
     } catch (error) {
       setSubmitState({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'Не удалось оформить заказ.'
+        text: error instanceof Error ? error.message : 'Не удалось отправить B2B заявку.'
       });
     }
   }
@@ -259,9 +154,9 @@ export default function CheckoutPage() {
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-6">
             <SectionHeading
-              eyebrow="Оформление заказа"
-              title="Проверьте упаковку и укажите адрес"
-              description="После оформления мы подтвердим детали, доставку и удобный способ оплаты."
+              eyebrow="B2B заявка"
+              title="Соберите фасовки и отправьте запрос"
+              description="Страница для оптовых и партнерских заявок: укажите объем, контакты и детали поставки."
             />
 
             <div className="glass-panel space-y-4">
@@ -356,7 +251,7 @@ export default function CheckoutPage() {
 
           <div className="glass-panel">
             <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-              <input type="hidden" {...register('paymentMethod')} value="OZON_ACQUIRING" />
+              <input type="hidden" {...register('paymentMethod')} value="MANAGER_COORDINATION" />
               <div className="grid gap-4 md:grid-cols-2">
                 <Input label="Имя" error={errors.name?.message} {...register('name')} />
                 <Input label="Телефон" error={errors.phone?.message} {...register('phone')} />
@@ -378,10 +273,10 @@ export default function CheckoutPage() {
                 {deliveryOptions.find((option) => option.value === deliveryMethod)?.hint}
               </p>
               <div className="rounded-[1.4rem] border border-line/70 bg-white/80 px-5 py-4">
-                <p className="text-sm uppercase tracking-[0.28em] text-brand/70">Оплата</p>
-                <p className="mt-2 text-base font-semibold text-ink">Защищенная страница оплаты</p>
+                <p className="text-sm uppercase tracking-[0.28em] text-brand/70">Что дальше</p>
+                <p className="mt-2 text-base font-semibold text-ink">Подтверждение менеджером</p>
                 <p className="mt-2 text-sm text-muted">
-                  После подтверждения заказа вы сразу перейдете на страницу оплаты.
+                  После отправки заявки мы свяжемся для согласования цены, поставки и документов.
                 </p>
               </div>
               <Textarea
@@ -392,7 +287,7 @@ export default function CheckoutPage() {
               />
               {submitState ? <StatusBanner tone={submitState.tone} text={submitState.text} /> : null}
               <Button type="submit" disabled={isSubmitting || items.length === 0}>
-                {isSubmitting ? 'Оформляем заказ...' : 'Оплатить'}
+                {isSubmitting ? 'Отправляем заявку...' : 'Отправить B2B заявку'}
               </Button>
             </form>
           </div>

@@ -4,6 +4,7 @@ import { BrandMark } from './BrandMark';
 import { Container } from './ui/Container';
 import { getButtonClassName } from './ui/Button';
 import { ozonProductUrl } from '../data/brand';
+import { cartSelectors, useCartStore } from '../store/cart';
 
 const navItems = [
   { to: '/#about', label: 'О бренде' },
@@ -13,6 +14,7 @@ const navItems = [
 ];
 
 export function Header() {
+  const itemCount = useCartStore((state) => cartSelectors.itemCount(state.items));
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -36,21 +38,19 @@ export function Header() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <a
-              href={ozonProductUrl}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/checkout"
               className="text-sm font-medium text-muted transition hover:text-ink"
             >
-              Купить на Ozon
-            </a>
+              B2B заявка {itemCount > 0 ? `(${itemCount})` : ''}
+            </Link>
             <a
               href={ozonProductUrl}
               target="_blank"
               rel="noreferrer"
               className={getButtonClassName({ variant: 'secondary', className: 'px-5' })}
             >
-              Купить
+              Ozon
             </a>
           </div>
 
@@ -100,15 +100,13 @@ export function Header() {
               >
                 Купить на Ozon
               </a>
-              <a
-                href={ozonProductUrl}
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                to="/checkout"
                 className={getButtonClassName({ variant: 'secondary', className: 'mt-2 w-full justify-center' })}
                 onClick={() => setIsOpen(false)}
               >
-                Купить
-              </a>
+                B2B заявка {itemCount > 0 ? `(${itemCount})` : ''}
+              </Link>
             </nav>
           </div>
         ) : null}

@@ -32,6 +32,9 @@ export function Footer() {
               <Link to="/catalog" className="transition hover:text-ink">
                 Каталог
               </Link>
+              <Link to="/checkout" className="transition hover:text-ink">
+                B2B заявка
+              </Link>
               <a href={ozonProductUrl} target="_blank" rel="noreferrer" className="transition hover:text-ink">
                 Купить на Ozon
               </a>

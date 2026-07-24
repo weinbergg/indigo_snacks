@@ -10,7 +10,7 @@ export function HowToOrderSection() {
         <SectionHeading
           eyebrow="Как заказать"
           title="Покупка в пару кликов"
-          description="Мы сделали процесс простым: выбрали фасовку, перешли на Ozon и оформили заказ в привычном интерфейсе маркетплейса."
+          description="Мы сделали процесс простым: выбрали фасовку, добавили в заявку и согласовали детали с менеджером."
         />
 
         <div className="mt-8 grid gap-5 md:grid-cols-3 md:auto-rows-fr">

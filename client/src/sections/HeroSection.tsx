@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { heroStats, ozonProductUrl } from '../data/brand';
+import { heroStats } from '../data/brand';
 import { Container } from '../components/ui/Container';
 import { getButtonClassName } from '../components/ui/Button';
 import { Reveal } from '../components/Reveal';
@@ -28,14 +28,9 @@ export function HeroSection() {
                 держать дома.
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <a
-                  href={ozonProductUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={getButtonClassName({ variant: 'primary' })}
-                >
-                  Купить на Ozon
-                </a>
+                <Link to="/catalog" className={getButtonClassName({ variant: 'primary' })}>
+                  Выбрать фасовку
+                </Link>
                 <Link to="/#lead-form" className={getButtonClassName({ variant: 'secondary' })}>
                   Задать вопрос
                 </Link>
