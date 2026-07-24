@@ -3,7 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { BrandMark } from './BrandMark';
 import { Container } from './ui/Container';
 import { getButtonClassName } from './ui/Button';
-import { cartSelectors, useCartStore } from '../store/cart';
+import { ozonProductUrl } from '../data/brand';
 
 const navItems = [
   { to: '/#about', label: 'О бренде' },
@@ -13,7 +13,6 @@ const navItems = [
 ];
 
 export function Header() {
-  const itemCount = useCartStore((state) => cartSelectors.itemCount(state.items));
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -37,15 +36,22 @@ export function Header() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Link to="/checkout" className="text-sm font-medium text-muted transition hover:text-ink">
-              Корзина {itemCount > 0 ? `(${itemCount})` : ''}
-            </Link>
-            <Link
-              to="/catalog"
+            <a
+              href={ozonProductUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-muted transition hover:text-ink"
+            >
+              Купить на Ozon
+            </a>
+            <a
+              href={ozonProductUrl}
+              target="_blank"
+              rel="noreferrer"
               className={getButtonClassName({ variant: 'secondary', className: 'px-5' })}
             >
               Купить
-            </Link>
+            </a>
           </div>
 
           <button
@@ -85,20 +91,24 @@ export function Header() {
                   {item.label}
                 </NavLink>
               ))}
-              <NavLink
-                to="/checkout"
+              <a
+                href={ozonProductUrl}
+                target="_blank"
+                rel="noreferrer"
                 className="rounded-2xl border border-transparent bg-white/55 px-4 py-3 text-sm font-medium text-muted transition hover:border-line/70 hover:bg-white/85 hover:text-ink"
                 onClick={() => setIsOpen(false)}
               >
-                Корзина {itemCount > 0 ? `(${itemCount})` : ''}
-              </NavLink>
-              <Link
-                to="/catalog"
+                Купить на Ozon
+              </a>
+              <a
+                href={ozonProductUrl}
+                target="_blank"
+                rel="noreferrer"
                 className={getButtonClassName({ variant: 'secondary', className: 'mt-2 w-full justify-center' })}
                 onClick={() => setIsOpen(false)}
               >
                 Купить
-              </Link>
+              </a>
             </nav>
           </div>
         ) : null}

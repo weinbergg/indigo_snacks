@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { BrandMark } from './BrandMark';
 import { Container } from './ui/Container';
-import { legalNotice } from '../data/brand';
+import { legalNotice, ozonProductUrl } from '../data/brand';
 
 export function Footer() {
   return (
@@ -15,6 +15,15 @@ export function Footer() {
               чистым составом и спокойным повседневным ритмом.
             </p>
             <p className="max-w-md text-sm leading-6 text-muted">{legalNotice}</p>
+            <p className="max-w-md text-sm leading-6 text-muted">
+              Связь:{' '}
+              <a
+                href="mailto:georgyim@gmail.com"
+                className="font-medium text-brand transition hover:text-ink"
+              >
+                georgyim@gmail.com
+              </a>
+            </p>
           </div>
 
           <div>
@@ -23,9 +32,9 @@ export function Footer() {
               <Link to="/catalog" className="transition hover:text-ink">
                 Каталог
               </Link>
-              <Link to="/checkout" className="transition hover:text-ink">
-                Корзина и заказ
-              </Link>
+              <a href={ozonProductUrl} target="_blank" rel="noreferrer" className="transition hover:text-ink">
+                Купить на Ozon
+              </a>
               <Link to="/#subscription" className="transition hover:text-ink">
                 Подписка
               </Link>

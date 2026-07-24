@@ -9,8 +9,8 @@ export function HowToOrderSection() {
       <Container>
         <SectionHeading
           eyebrow="Как заказать"
-          title="Оформление без лишних шагов"
-          description="Мы сделали заказ простым: выбрали упаковку, указали адрес, подтвердили детали и спокойно ждете доставку."
+          title="Покупка в пару кликов"
+          description="Мы сделали процесс простым: выбрали фасовку, перешли на Ozon и оформили заказ в привычном интерфейсе маркетплейса."
         />
 
         <div className="mt-8 grid gap-5 md:grid-cols-3 md:auto-rows-fr">

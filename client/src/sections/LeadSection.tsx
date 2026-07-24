@@ -62,7 +62,7 @@ export function LeadSection() {
           <SectionHeading
             eyebrow="Связаться с нами"
             title="Если нужен совет по заказу, оставьте сообщение"
-            description="Подскажем по продукту, доставке, регулярным заказам или покупке нескольких упаковок."
+            description="Подскажем по продукту, доставке, регулярным заказам или покупке нескольких упаковок. Также можно написать на georgyim@gmail.com."
           />
 
           <form className="mt-8 grid gap-4" onSubmit={handleSubmit(onSubmit)}>

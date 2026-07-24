@@ -1,18 +1,14 @@
-import { useState } from 'react';
 import type { Product } from '../types/api';
 import { formatCurrency, formatWeight } from '../lib/format';
-import { Button } from './ui/Button';
+import { getButtonClassName } from './ui/Button';
 import { Reveal } from './Reveal';
-import { useCartStore } from '../store/cart';
+import { ozonProductUrl } from '../data/brand';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const addItem = useCartStore((state) => state.addItem);
-  const [addedVariantId, setAddedVariantId] = useState<string | null>(null);
-
   return (
     <Reveal className="glass-panel overflow-hidden">
       <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
@@ -77,29 +73,18 @@ export function ProductCard({ product }: ProductCardProps) {
                         </p>
                       ) : null}
                     </div>
-                    <Button
-                      variant={variant.isAvailable ? 'primary' : 'secondary'}
-                      disabled={!variant.isAvailable}
-                      onClick={() => {
-                        addItem({
-                          variantId: variant.id,
-                          sku: variant.sku,
-                          productSlug: product.slug,
-                          productName: product.name,
-                          variantLabel: variant.label,
-                          weightGrams: variant.weightGrams,
-                          unitPriceKopecks: variant.priceKopecks,
-                          image: variant.image || product.baseImage
-                        });
-                        setAddedVariantId(variant.id);
-                      }}
+                    <a
+                      href={variant.isAvailable ? ozonProductUrl : undefined}
+                      target={variant.isAvailable ? '_blank' : undefined}
+                      rel={variant.isAvailable ? 'noreferrer' : undefined}
+                      aria-disabled={!variant.isAvailable}
+                      className={getButtonClassName({
+                        variant: variant.isAvailable ? 'primary' : 'secondary',
+                        className: !variant.isAvailable ? 'pointer-events-none' : ''
+                      })}
                     >
-                      {!variant.isAvailable
-                        ? 'Нет в наличии'
-                        : addedVariantId === variant.id
-                          ? 'Добавлено'
-                          : 'В корзину'}
-                    </Button>
+                      {variant.isAvailable ? 'Купить на Ozon' : 'Нет в наличии'}
+                    </a>
                   </div>
                 </div>
               </div>
