@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { Product } from '../types/api';
 import { formatCurrency, formatWeight } from '../lib/format';
 import { Button } from './ui/Button';
@@ -11,17 +10,26 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
-  const [addedVariantId, setAddedVariantId] = useState<string | null>(null);
-  const [variantQuantities, setVariantQuantities] = useState<Record<string, number>>({});
+  const items = useCartStore((state) => state.items);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const removeItem = useCartStore((state) => state.removeItem);
 
-  const getQuantity = (variantId: string) => variantQuantities[variantId] ?? 1;
+  const getQuantity = (variantId: string) =>
+    items.find((item) => item.variantId === variantId)?.quantity ?? 0;
 
-  const setQuantity = (variantId: string, value: number) => {
-    const nextValue = Number.isFinite(value) ? Math.min(99, Math.max(1, Math.trunc(value))) : 1;
-    setVariantQuantities((state) => ({
-      ...state,
-      [variantId]: nextValue
-    }));
+  const handleDecrease = (variantId: string) => {
+    const quantity = getQuantity(variantId);
+    const nextQuantity = quantity - 1;
+    if (nextQuantity <= 0) {
+      removeItem(variantId);
+      return;
+    }
+    updateQuantity(variantId, nextQuantity);
+  };
+
+  const handleIncrease = (variantId: string) => {
+    const quantity = getQuantity(variantId);
+    updateQuantity(variantId, Math.min(99, quantity + 1));
   };
 
   return (
@@ -88,60 +96,51 @@ export function ProductCard({ product }: ProductCardProps) {
                         </p>
                       ) : null}
                     </div>
-                    <div className="flex items-center rounded-full border border-line/80 bg-white/85 p-1 shadow-[0_6px_16px_rgba(18,84,86,0.07)]">
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink transition hover:bg-brand-soft/60"
-                        onClick={() => setQuantity(variant.id, getQuantity(variant.id) - 1)}
-                        aria-label="Уменьшить количество"
+                    {getQuantity(variant.id) > 0 ? (
+                      <div className="flex min-h-12 w-[10.5rem] items-center justify-between rounded-full border border-line/80 bg-white px-2 shadow-[0_6px_16px_rgba(18,84,86,0.07)]">
+                        <button
+                          type="button"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-ink transition hover:bg-brand-soft/60"
+                          onClick={() => handleDecrease(variant.id)}
+                          aria-label="Уменьшить количество"
+                          disabled={!variant.isAvailable}
+                        >
+                          −
+                        </button>
+                        <span className="min-w-8 text-center text-sm font-semibold text-ink">
+                          {getQuantity(variant.id)}
+                        </span>
+                        <button
+                          type="button"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-ink transition hover:bg-brand-soft/60"
+                          onClick={() => handleIncrease(variant.id)}
+                          aria-label="Увеличить количество"
+                          disabled={!variant.isAvailable}
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant={variant.isAvailable ? 'primary' : 'secondary'}
                         disabled={!variant.isAvailable}
+                        className="w-[10.5rem]"
+                        onClick={() => {
+                          addItem({
+                            variantId: variant.id,
+                            sku: variant.sku,
+                            productSlug: product.slug,
+                            productName: product.name,
+                            variantLabel: variant.label,
+                            weightGrams: variant.weightGrams,
+                            unitPriceKopecks: variant.priceKopecks,
+                            image: variant.image || product.baseImage
+                          });
+                        }}
                       >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        min={1}
-                        max={99}
-                        value={getQuantity(variant.id)}
-                        onChange={(event) => setQuantity(variant.id, Number(event.target.value))}
-                        className="h-8 w-14 border-x border-line/70 bg-transparent px-2 text-center text-sm font-semibold text-ink focus:outline-none"
-                        aria-label="Количество упаковок"
-                        disabled={!variant.isAvailable}
-                      />
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink transition hover:bg-brand-soft/60"
-                        onClick={() => setQuantity(variant.id, getQuantity(variant.id) + 1)}
-                        aria-label="Увеличить количество"
-                        disabled={!variant.isAvailable}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <Button
-                      variant={variant.isAvailable ? 'primary' : 'secondary'}
-                      disabled={!variant.isAvailable}
-                      className="min-w-[9.5rem]"
-                      onClick={() => {
-                        addItem({
-                          variantId: variant.id,
-                          sku: variant.sku,
-                          productSlug: product.slug,
-                          productName: product.name,
-                          variantLabel: variant.label,
-                          weightGrams: variant.weightGrams,
-                          unitPriceKopecks: variant.priceKopecks,
-                          image: variant.image || product.baseImage
-                        }, getQuantity(variant.id));
-                        setAddedVariantId(variant.id);
-                      }}
-                    >
-                      {!variant.isAvailable
-                        ? 'Нет в наличии'
-                        : addedVariantId === variant.id
-                          ? 'Добавлено'
-                          : 'В корзину'}
-                    </Button>
+                        {variant.isAvailable ? 'В корзину' : 'Нет в наличии'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
