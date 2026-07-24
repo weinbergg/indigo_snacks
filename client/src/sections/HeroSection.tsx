@@ -1,4 +1,5 @@
-import { motion, useReducedMotion } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { heroStats } from '../data/brand';
 import { Container } from '../components/ui/Container';
@@ -9,9 +10,15 @@ import { Tilt } from '../components/Tilt';
 
 export function HeroSection() {
   const reduceMotion = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start']
+  });
+  const medallionY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : -46]);
 
   return (
-    <section className="section-space-hero overflow-hidden">
+    <section ref={sectionRef} className="section-space-hero overflow-hidden">
       <Container>
         <div className="grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12">
           <div>
@@ -79,7 +86,10 @@ export function HeroSection() {
           </div>
 
           <Reveal delay={0.08}>
-            <div className="group relative mx-auto flex w-full max-w-[23rem] items-center justify-center sm:max-w-[29rem] lg:max-w-[34rem]">
+            <motion.div
+              style={{ y: medallionY }}
+              className="group relative mx-auto flex w-full max-w-[23rem] items-center justify-center sm:max-w-[29rem] lg:max-w-[34rem]"
+            >
               <span className="ambient-orb ambient-orb--brand -left-6 top-4 h-40 w-40 sm:h-52 sm:w-52" />
               <span className="ambient-orb ambient-orb--accent -right-4 bottom-6 h-36 w-36 sm:h-48 sm:w-48" />
               <span className="ambient-orb ambient-orb--soft left-10 -bottom-4 h-32 w-32 sm:h-40 sm:w-40" />
@@ -97,8 +107,8 @@ export function HeroSection() {
               <div className="relative w-full">
                 <Tilt
                   className="relative rounded-full bg-[#d6e7e2] p-4 shadow-lift transition-shadow duration-300 group-hover:shadow-[0_28px_80px_rgba(18,84,86,0.18)] sm:p-6"
-                  max={9}
-                  scale={1.035}
+                  max={14}
+                  scale={1.045}
                 >
                   <div className="relative z-10 mx-auto aspect-square w-full max-w-[30rem]">
                     <BrandDogBadge
@@ -117,7 +127,7 @@ export function HeroSection() {
                   </span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </Reveal>
         </div>
       </Container>

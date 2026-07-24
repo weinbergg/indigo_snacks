@@ -5,10 +5,21 @@ interface BrandDogBadgeProps {
   frameClassName?: string;
   dogClassName?: string;
   showInnerRings?: boolean;
-  /** Плавное «дыхание» собаки: лёгкое покачивание и масштаб. */
+  /** Плавное «дыхание» + периодический наклон головы. */
   animated?: boolean;
   alt?: string;
 }
+
+const dogMaskStyle = {
+  WebkitMaskImage: 'url(/assets/brand/dog-opaque-mask.png)',
+  maskImage: 'url(/assets/brand/dog-opaque-mask.png)',
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskPosition: 'center',
+  maskPosition: 'center',
+  WebkitMaskSize: 'contain',
+  maskSize: 'contain'
+} as const;
 
 export function BrandDogBadge({
   className,
@@ -32,18 +43,34 @@ export function BrandDogBadge({
   const fillLayerClassName = ['absolute inset-0 z-[1] bg-brand-soft', fillClassName]
     .filter(Boolean)
     .join(' ');
-  const frameLayerClassName = ['pointer-events-none absolute inset-[8.5%] z-[1] opacity-80', frameClassName]
+  const frameLayerClassName = [
+    'pointer-events-none absolute inset-[8.5%] z-[1] opacity-80',
+    frameClassName
+  ]
     .filter(Boolean)
     .join(' ');
-  const dogLayerClassName = [
-    'absolute inset-0 z-[2] h-full w-full object-contain opacity-85',
-    animated
-      ? 'motion-safe:animate-[badge-breathe_6.5s_ease-in-out_infinite] [transform-origin:50%_62%]'
-      : '',
+  const dogImageClassName = [
+    'absolute inset-0 h-full w-full object-contain opacity-85',
     dogClassName
   ]
     .filter(Boolean)
     .join(' ');
+
+  // Живой пёс: наклон головы вложен в «дыхание», заливка-подложка движется
+  // вместе с иллюстрацией, чтобы линии фона не проступали по краям.
+  const dogGroup = animated ? (
+    <span className="absolute inset-0 z-[2] motion-safe:animate-[badge-breathe_7.5s_ease-in-out_infinite]">
+      <span className="absolute inset-0 [transform-origin:50%_42%] motion-safe:animate-[dog-head-tilt_17s_ease-in-out_infinite]">
+        <span className={fillLayerClassName} style={dogMaskStyle} />
+        <img src="/assets/brand/dog-illustration.png" alt={alt} className={dogImageClassName} />
+      </span>
+    </span>
+  ) : (
+    <>
+      <span className={fillLayerClassName} style={dogMaskStyle} />
+      <img src="/assets/brand/dog-illustration.png" alt={alt} className={dogImageClassName} />
+    </>
+  );
 
   return (
     <span className={badgeClassName} aria-hidden="true">
@@ -56,26 +83,7 @@ export function BrandDogBadge({
           <span className="pointer-events-none absolute inset-[18%] z-[1] rounded-full border border-brand/15" />
         </>
       ) : null}
-      <span className={shapeLayerClassName}>
-        <span
-          className={fillLayerClassName}
-          style={{
-            WebkitMaskImage: 'url(/assets/brand/dog-opaque-mask.png)',
-            maskImage: 'url(/assets/brand/dog-opaque-mask.png)',
-            WebkitMaskRepeat: 'no-repeat',
-            maskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center',
-            maskPosition: 'center',
-            WebkitMaskSize: 'contain',
-            maskSize: 'contain'
-          }}
-        />
-        <img
-          src="/assets/brand/dog-illustration.png"
-          alt={alt}
-          className={dogLayerClassName}
-        />
-      </span>
+      <span className={shapeLayerClassName}>{dogGroup}</span>
     </span>
   );
 }

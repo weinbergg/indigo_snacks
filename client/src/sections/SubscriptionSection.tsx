@@ -126,8 +126,11 @@ export function SubscriptionSection({ products }: SubscriptionSectionProps) {
   return (
     <section id="subscription" className="section-space">
       <Container>
-        <div className="grid gap-7 rounded-[2rem] border border-line/70 bg-brand-deep p-5 text-white shadow-lift sm:p-7 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8 lg:p-10">
-          <Reveal>
+        <div className="relative grid gap-7 overflow-hidden rounded-[2rem] border border-line/70 bg-brand-deep p-5 text-white shadow-lift sm:p-7 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8 lg:p-10">
+          <span className="ambient-orb ambient-orb--brand -left-10 -top-10 h-56 w-56 opacity-40" />
+          <span className="ambient-orb ambient-orb--accent -right-8 bottom-0 h-52 w-52 opacity-35" />
+
+          <Reveal className="relative z-[1]">
             <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/60">
               Регулярные заказы
             </p>
@@ -145,7 +148,7 @@ export function SubscriptionSection({ products }: SubscriptionSectionProps) {
             </div>
           </Reveal>
 
-          <Reveal delay={0.08}>
+          <Reveal delay={0.08} className="relative z-[1]">
             <form
               className="grid gap-5 rounded-[1.8rem] bg-panel p-5 text-ink shadow-soft sm:p-6"
               onSubmit={handleSubmit(onSubmit)}

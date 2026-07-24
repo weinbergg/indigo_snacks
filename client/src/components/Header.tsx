@@ -10,7 +10,7 @@ const navItems = [
   { to: '/#about', label: 'О бренде' },
   { to: '/#catalog', label: 'Фасовки' },
   { to: '/catalog', label: 'Каталог' },
-  { to: '/#subscription', label: 'Подписка' }
+  { to: '/subscription', label: 'Подписка' }
 ];
 
 export function Header() {

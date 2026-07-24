@@ -4,6 +4,7 @@ import { MainLayout } from '../layouts/MainLayout';
 
 const HomePage = lazy(() => import('../pages/HomePage'));
 const CatalogPage = lazy(() => import('../pages/CatalogPage'));
+const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage'));
 const CheckoutPage = lazy(() => import('../pages/CheckoutPage'));
 const PrivacyPage = lazy(() => import('../pages/PrivacyPage'));
 const TermsPage = lazy(() => import('../pages/TermsPage'));
@@ -16,6 +17,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'catalog', element: <CatalogPage /> },
+      { path: 'subscription', element: <SubscriptionPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
       { path: 'privacy', element: <PrivacyPage /> },
       { path: 'terms', element: <TermsPage /> },

@@ -1,5 +1,8 @@
+import { Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { SectionHeading } from '../components/ui/SectionHeading';
+import { BackLink } from '../components/BackLink';
+import { getButtonClassName } from '../components/ui/Button';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { useProducts } from '../hooks/useProducts';
 import { ProductCard } from '../components/ProductCard';
@@ -13,8 +16,18 @@ export default function CatalogPage() {
   );
 
   return (
-    <section className="py-16 sm:py-20">
+    <section className="pb-16 pt-10 sm:pb-24 sm:pt-14">
       <Container>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <BackLink />
+          <Link
+            to="/subscription"
+            className={getButtonClassName({ variant: 'ghost', className: 'px-4' })}
+          >
+            Регулярные заказы
+          </Link>
+        </div>
+
         <SectionHeading
           eyebrow="Каталог"
           title="Снеки из индейки"

@@ -38,7 +38,7 @@ export function Footer() {
               <a href={ozonProductUrl} target="_blank" rel="noreferrer" className="transition hover:text-ink">
                 Купить на Ozon
               </a>
-              <Link to="/#subscription" className="transition hover:text-ink">
+              <Link to="/subscription" className="transition hover:text-ink">
                 Подписка
               </Link>
             </div>

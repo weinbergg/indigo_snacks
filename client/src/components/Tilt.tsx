@@ -31,7 +31,7 @@ export function Tilt({
   const px = useMotionValue(0.5);
   const py = useMotionValue(0.5);
 
-  const springConfig = { stiffness: 150, damping: 18, mass: 0.4 };
+  const springConfig = { stiffness: 190, damping: 16, mass: 0.35 };
   const sx = useSpring(px, springConfig);
   const sy = useSpring(py, springConfig);
 

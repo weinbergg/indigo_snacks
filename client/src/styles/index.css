@@ -172,7 +172,30 @@ input[type="number"] {
     transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-2.2%) scale(1.014);
+    transform: translateY(-1%) scale(1.006);
+  }
+}
+
+/* Периодический мягкий наклон головы: пёс «оживает» без резких движений */
+@keyframes dog-head-tilt {
+  0%,
+  32%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40%,
+  50% {
+    transform: rotate(-3deg);
+  }
+  58% {
+    transform: rotate(0deg);
+  }
+  66%,
+  78% {
+    transform: rotate(2.1deg);
+  }
+  86% {
+    transform: rotate(0deg);
   }
 }
 

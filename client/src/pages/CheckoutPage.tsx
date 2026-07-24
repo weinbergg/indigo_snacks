@@ -13,6 +13,7 @@ import { cartSelectors, useCartStore } from '../store/cart';
 import type { DeliveryQuote, OrderResponse } from '../types/api';
 import { Container } from '../components/ui/Container';
 import { SectionHeading } from '../components/ui/SectionHeading';
+import { BackLink } from '../components/BackLink';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
@@ -149,8 +150,18 @@ export default function CheckoutPage() {
   }
 
   return (
-    <section className="py-16 sm:py-20">
+    <section className="pb-16 pt-10 sm:pb-24 sm:pt-14">
       <Container>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <BackLink />
+          <Link
+            to="/catalog"
+            className="text-sm font-medium text-brand transition hover:text-ink"
+          >
+            Вернуться в каталог
+          </Link>
+        </div>
+
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-6">
             <SectionHeading
