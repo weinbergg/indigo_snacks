@@ -1,6 +1,8 @@
 import { prisma } from '../db/prisma';
 import { catalogSeed } from '../db/catalog-seed';
 
+const LEGACY_PRICE_KOPECKS = new Set([25000, 45000, 190000]);
+
 export async function bootstrapCatalog() {
   for (const product of catalogSeed) {
     const activeSkus = product.variants.map((variant) => variant.sku);
@@ -30,13 +32,19 @@ export async function bootstrapCatalog() {
     });
 
     for (const variant of product.variants) {
+      const existing = await prisma.productVariant.findUnique({
+        where: { sku: variant.sku },
+        select: { priceKopecks: true }
+      });
+      const shouldWritePrice = !existing || LEGACY_PRICE_KOPECKS.has(existing.priceKopecks);
+
       await prisma.productVariant.upsert({
         where: { sku: variant.sku },
         update: {
           productId: product.id,
           label: variant.label,
           weightGrams: variant.weightGrams,
-          priceKopecks: variant.priceKopecks,
+          ...(shouldWritePrice ? { priceKopecks: variant.priceKopecks } : {}),
           compareAtPriceKopecks: variant.compareAtPriceKopecks,
           description: variant.description,
           image: variant.image,
@@ -102,4 +110,35 @@ export async function listProducts() {
       }
     }
   });
+}
+
+export async function listAdminVariants() {
+  return prisma.productVariant.findMany({
+    orderBy: [{ product: { sortOrder: 'asc' } }, { sortOrder: 'asc' }],
+    select: {
+      id: true,
+      sku: true,
+      label: true,
+      weightGrams: true,
+      priceKopecks: true,
+      product: {
+        select: {
+          name: true
+        }
+      }
+    }
+  });
+}
+
+export async function updateVariantPrices(
+  updates: Array<{ sku: string; priceKopecks: number }>
+) {
+  await prisma.$transaction(
+    updates.map((update) =>
+      prisma.productVariant.update({
+        where: { sku: update.sku },
+        data: { priceKopecks: update.priceKopecks }
+      })
+    )
+  );
 }

@@ -94,7 +94,9 @@ const envSchema = z.object({
   OZON_ACQUIRING_FAIL_URL: optionalStringSchema,
   OZON_ACQUIRING_NOTIFICATION_URL: optionalStringSchema,
   OZON_ACQUIRING_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
-  OZON_ACQUIRING_PAYMENT_TTL_SECONDS: z.coerce.number().int().positive().default(1800)
+  OZON_ACQUIRING_PAYMENT_TTL_SECONDS: z.coerce.number().int().positive().default(1800),
+  ADMIN_PASSWORD: optionalStringSchema,
+  ADMIN_SESSION_SECRET: optionalStringSchema
 });
 
 export const env = envSchema.parse(process.env);

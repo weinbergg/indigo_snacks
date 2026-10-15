@@ -165,6 +165,7 @@ pm2 startup
 
 - `client/dist` раздается как статика
 - `/api/*` проксируется на `127.0.0.1:4000`
+- `/admin` проксируется на API и открывает простую админку цен
 - SPA маршруты уходят в `/index.html`
 - ассеты кешируются
 
@@ -239,6 +240,7 @@ cp .env.production.example .env
 
 - `NODE_ENV=production`
 - `CLIENT_ORIGIN="https://indigo-snacks.ru"`
+- `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` для входа на `https://indigo-snacks.ru/admin`
 
 ### Подключение Nginx
 
@@ -293,14 +295,72 @@ sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
-## 11. Комментарии по дальнейшему росту
+## 11. Админка цен
+
+Адрес: `https://indigo-snacks.ru/admin`
+
+Это отдельная HTML-страница на том же API, не React-раздел. После входа можно менять розничные цены фасовок. Значения пишутся в SQLite и сразу отдаются каталогу.
+
+Переменные в `.env`:
+
+- `ADMIN_PASSWORD` — пароль входа
+- `ADMIN_SESSION_SECRET` — секрет подписи cookie. Если пусто, используется `ADMIN_PASSWORD`
+
+Цены в seed (`299 / 549 / 2490`) применяются только при первом создании SKU или если в базе ещё старые `250 / 450 / 1900`. После правки через админку перезапуск PM2 эти цены не затирает.
+
+## 12. Обновление уже работающего VPS
+
+На сервере:
+
+```bash
+cd /var/www/indigo-snacks
+git pull
+```
+
+В `/var/www/indigo-snacks/.env` добавьте, если строк ещё нет:
+
+```bash
+ADMIN_PASSWORD="придумайте-свой-пароль"
+ADMIN_SESSION_SECRET="длинная-случайная-строка"
+```
+
+Дальше:
+
+```bash
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run build
+pm2 restart indigo-snacks-api
+```
+
+Обновите Nginx, чтобы `/admin` шёл на API, а не в `index.html`:
+
+```bash
+sudo cp deploy/nginx/indigo-snacks.conf /etc/nginx/sites-available/indigo-snacks.conf
+```
+
+Если HTTPS уже настроен через certbot, не копируйте файл вслепую: откройте текущий конфиг и добавьте только блок `location /admin` из репозитория в HTTPS-server. Затем:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Проверка:
+
+- витрина: 50 г = 299 ₽, 100 г = 549 ₽, 500 г = 2490 ₽
+- админка: `https://indigo-snacks.ru/admin`
+
+Если сайт открывается по HTTP, сначала зайдите по HTTPS, иначе cookie входа может не сохраниться.
+
+## 13. Комментарии по дальнейшему росту
 
 - Реальную оплату подключать через `server/src/services/payments/`
 - Реальную доставку подключать через `server/src/services/delivery.service.ts`
-- Простую админку можно добавлять отдельным закрытым разделом на этом же API
 - При росте нагрузки можно оставить фронтенд без изменений и перевести backend с SQLite на PostgreSQL
 
-## 12. Ozon Acquiring
+## 14. Ozon Acquiring
 
 В проект добавлена подготовка под `Ozon Acquiring` на основе локально сохраненной документации из архива `Документация Ozon Acquiring API.webarchive`.
 
@@ -344,7 +404,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 - webhook по заказу: `SHA256("{accessKey}|{orderID}|{transactionID}|{extOrderID}|{amount}|{currencyCode}|{notificationSecretKey}")`
 - webhook для самостоятельной оплаты: `SHA256("{accessKey}|||{extTransactionID}|{amount}|{currencyCode}|{notificationSecretKey}")`
 
-## 13. Замена изображений
+## 15. Замена изображений
 
 Текущие брендовые placeholders лежат в:
 

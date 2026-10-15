@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { apiRouter } from './routes';
+import { createAdminRouter } from './admin/router';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error-handler';
 import { notFoundHandler } from './middleware/not-found';
@@ -13,7 +14,15 @@ export function createApp() {
   app.set('trust proxy', 1);
   app.use(
     helmet({
-      crossOriginResourcePolicy: false
+      crossOriginResourcePolicy: false,
+      hsts: false,
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'upgrade-insecure-requests': null,
+          'style-src': ["'self'", 'https:', "'unsafe-inline'"]
+        }
+      }
     })
   );
   app.use(express.json({ limit: '50kb' }));
@@ -36,6 +45,7 @@ export function createApp() {
     })
   );
   app.use('/api', apiRouter);
+  app.use('/admin', createAdminRouter());
 
   app.use(notFoundHandler);
   app.use(errorHandler);
